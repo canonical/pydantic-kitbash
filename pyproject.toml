@@ -1,5 +1,5 @@
 [project]
-name = "starcraft"
+name = "sphinx-craft-docs"
 description = "The basis for Starcraft team packages"
 dynamic = ["version", "readme"]
 dependencies = [

@@ -1,4 +1,4 @@
-PROJECT=starcraft
+PROJECT=sphinx-craft-docs
 UV_TEST_GROUPS := "--group=dev"
 UV_DOCS_GROUPS := "--group=docs"
 UV_LINT_GROUPS := "--group=lint" "--group=types"
