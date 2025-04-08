@@ -59,7 +59,7 @@ class KitbashFieldDirective(SphinxDirective):
         field_name = self.arguments[1]
 
         # grab pydantic field data
-        field_params = pydantic_class.__fields__[field_name]
+        field_params = pydantic_class.model_fields[field_name]
 
         if field_params.alias:
             field_alias = field_params.alias
@@ -294,8 +294,8 @@ def create_key_node(key_name: str, deprecated_message: str, key_type: str, key_d
 
     """
     key_node = nodes.section(ids=[key_name])
-    title_node = nodes.title()
-    title_node += nodes.literal(text=key_name)
+    key_node["classes"] = ["kitbash-entry"]
+    title_node = nodes.title(text=key_name)
     key_node += title_node
 
     if deprecated_message:
@@ -309,7 +309,7 @@ def create_key_node(key_name: str, deprecated_message: str, key_type: str, key_d
         type_header = nodes.paragraph()
         type_header += nodes.strong(text="Type")
         type_value = nodes.paragraph()
-        type_value += nodes.Text(key_type)
+        type_value += nodes.literal(text=key_type)
         key_node += type_header
         key_node += type_value
 
@@ -356,8 +356,7 @@ def build_examples_block(key_name: str, example: str) -> nodes.literal_block:
         yaml_str = yaml_str.replace("- ", "  - ").rstrip("\n")
         # yaml_str = textwrap.indent(yaml_string, "  ")
     except yaml.YAMLError as e:
-        warnings.warn(
-            f"Invalid YAML for key {key_name}: {e}", category=UserWarning)
+        warnings.warn(f"Invalid YAML for key {key_name}: {e}", category=UserWarning)
         yaml_str = example
 
     # f'{key_name.rsplit(".", maxsplit=1)[-1]}: \n'

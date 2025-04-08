@@ -38,6 +38,12 @@ TEST_TYPE = Annotated[
     ),
 ]
 
+TYPE_NO_FIELD = Annotated[
+    str,
+    pydantic.AfterValidator(validator),
+    pydantic.BeforeValidator(validator),
+]
+
 RST_SAMPLE = """This is an rST sample.
 
 **Examples**
@@ -70,7 +76,7 @@ KEY_ENTRY_RST = """\
 
 **Type**
 
-str
+``str``
 
 **Description**
 
@@ -78,13 +84,20 @@ This is the key description
 
 """
 
+
 # Test for `find_field_data`
-
-
 def test_find_field_data():
     expected = TEST_TYPE.__metadata__[2]
     actual = find_field_data(TEST_TYPE.__metadata__)
 
+    assert expected == actual
+
+
+# Test for `find_field_data` when none is present
+def test_find_field_data_none():
+    expected = None
+    actual = find_field_data(TYPE_NO_FIELD.__metadata__)\
+    
     assert expected == actual
 
 
@@ -111,13 +124,16 @@ def test_is_deprecated():
 
 # Test for `create_key_node`
 def test_create_key_node():
+    # need to set up section node manually
     expected = nodes.section(ids=["key-name"])
-    title_node = nodes.title()
-    title_node += nodes.literal(text="key-name")
+    expected["classes"].append("kitbash-entry")
+    title_node = nodes.title(text="key-name")
     expected += title_node
     expected += publish_doctree(KEY_ENTRY_RST).children
 
-    # "Values" and "Examples" are tested below
+    # "Values" and "Examples" are tested separately because while
+    # their HTML output is identical, their docutils are structured
+    # differently from the publich_doctree output
     actual = create_key_node("key-name",
                              "Don't use this.",
                              "str",
@@ -125,14 +141,33 @@ def test_create_key_node():
                              None,
                              None)
 
-    print(f'\n{expected}\n\n{actual}\n')
-
     assert str(expected) == str(actual)
 
 
-# Test for `build_examples_block`
-def test_build_examples_block():
-    yaml_str = "test: passed"
+# Test for `build_examples_block` with valid input
+def test_build_valid_examples_block():
+    # Not using publish_doctree because the nodes differ, despite the HTML
+    # of the rendered output being identical. This test could be improved
+    # by using publish_doctree and the Sphinx HTML writer, which I couldn't
+    # seem to get working.
+    yaml_str = "test: [good, nice]"
+    yaml_str = yaml.dump(yaml.safe_load(yaml_str), default_flow_style=False)
+    yaml_str = yaml_str.replace("- ", "  - ").rstrip("\n")
+    
+    expected = nodes.literal_block(text=yaml_str)
+    expected["language"] = "yaml"
+
+    actual = build_examples_block("", yaml_str)
+
+    # comparing strings because docutils `__eq__`
+    # method compares by identity rather than state
+    assert str(expected) == str(actual)
+
+
+# Test for `build_examples_block` with invalid input
+@pytest.mark.filterwarnings("ignore::UserWarning")
+def test_build_invalid_examples_block():
+    yaml_str = "{[ oops"
 
     expected = nodes.literal_block(text=yaml_str)
     expected["language"] = "yaml"
@@ -148,8 +183,11 @@ def test_build_examples_block():
 def test_create_table_node():
     expected = nodes.container()
     expected += publish_doctree(TABLE_RST).children
+    
     actual = create_table_node([["1.1", "1.2"], ["2.1", "2.2"]])
 
+    # comparing strings because docutils `__eq__`
+    # method compares by identity rather than state
     assert str(expected) == str(actual)
 
 
@@ -180,8 +218,7 @@ def test_get_enum_member_docstring():
         """Should never see this docstring."""
 
     assert get_enum_member_docstring(MockEnum, "VAL1") == None
-    assert get_enum_member_docstring(
-        MockEnum, "VAL2") == "This is the second value."
+    assert get_enum_member_docstring(MockEnum, "VAL2") == "This is the second value."
 
 
 # Test for `get_enum_values`
@@ -194,8 +231,7 @@ def test_get_enum_values():
         VAL2 = "two"
         """Docstring 2."""
 
-    assert get_enum_values(MockEnum) == [
-        ["one", "Docstring 1."], ["two", "Docstring 2."]]
+    assert get_enum_values(MockEnum) == [["one", "Docstring 1."], ["two", "Docstring 2."]]
 
 
 # Test for `parse_rst_description`
@@ -205,6 +241,8 @@ def test_parse_rst_description():
     # function output
     actual = parse_rst_description(RST_SAMPLE)
 
+    # comparing strings because docutils `__eq__`
+    # method compares by identity rather than state
     assert str(expected) == str(actual)
 
 
