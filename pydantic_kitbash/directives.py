@@ -29,8 +29,8 @@ class KitbashFieldDirective(SphinxDirective):
     final_argument_whitespace = True
 
     option_spec = {
-        "hide-examples": bool,
-        "hide-type": bool,
+        "skip-examples": bool,
+        "skip-type": bool,
         "override-name": str,
         "prepend-name": str,
         "append-name": str,
@@ -76,21 +76,20 @@ class KitbashFieldDirective(SphinxDirective):
         # if field is optional "normal" type (e.g., str | None)
         if isinstance(field_params.annotation, types.UnionType):
             union_args = typing.get_args(field_params.annotation)
-            field_type = format_type_string(str(union_args[0]))
+            field_type = format_type_string(union_args[0])
             if issubclass(union_args[0], enum.Enum):
                 if description_str is None:
                     description_str = union_args[0].__doc__
                 enum_values = get_enum_values(union_args[0])
         else:
-            field_type = format_type_string(str(field_params.annotation))
+            field_type = format_type_string(field_params.annotation)
 
         # if field is optional annotated type (e.g., VersionStr | None)
         if typing.get_origin(field_params.annotation) is typing.Union:
             annotated_type = field_params.annotation.__args__[0]
             # weird case: optional literal list fields
             if not isinstance(annotated_type, typing._LiteralGenericAlias):
-                field_type = format_type_string(
-                    str(annotated_type.__args__[0]))
+                field_type = format_type_string(annotated_type.__args__[0])
             metadata = getattr(annotated_type, "__metadata__", None)
             field_annotation = find_field_data(metadata)
             if field_annotation:
@@ -100,17 +99,18 @@ class KitbashFieldDirective(SphinxDirective):
         elif isinstance(field_params.annotation, type):
             if issubclass(field_params.annotation, enum.Enum):
                 if description_str is None:
+                    # Use enum class docstring if field has no docstring
                     description_str = field_params.annotation.__doc__
                 enum_values = get_enum_values(field_params.annotation)
 
         deprecation_warning = is_deprecated(pydantic_class, field_name)
 
-        # Remove type if :hide-type: directive option was used
-        if "hide-type" in self.options:
+        # Remove type if :skip-type: directive option was used
+        if "skip-type" in self.options:
             field_type = None
 
-        # Remove examples if :hide-examples: directive option was used
-        if "hide-examples" in self.options:
+        # Remove examples if :skip-examples: directive option was used
+        if "skip-examples" in self.options:
             examples = None
 
         field_alias = self.options.get("override-name", field_alias)
@@ -172,8 +172,7 @@ class KitbashModelDirective(SphinxDirective):
                               for field in deprecated_option.split(",")]
 
         for field in pydantic_class.__annotations__:
-            is_auto_generated = field.startswith(
-                "_") or field.startswith("model_")
+            is_auto_generated = field.startswith("_") or field.startswith("model_")
 
             if not is_auto_generated:
                 deprecation_warning = is_deprecated(pydantic_class, field)
@@ -198,22 +197,20 @@ class KitbashModelDirective(SphinxDirective):
                 # if field is optional "normal" type (e.g., str | None)
                 if isinstance(field_params.annotation, types.UnionType):
                     union_args = typing.get_args(field_params.annotation)
-                    field_type = format_type_string(str(union_args[0]))
+                    field_type = format_type_string(union_args[0])
                     if issubclass(union_args[0], enum.Enum):
                         if description_str is None:
                             description_str = union_args[0].__doc__
                         enum_values = get_enum_values(union_args[0])
                 else:
-                    field_type = format_type_string(
-                        str(field_params.annotation))
+                    field_type = format_type_string(field_params.annotation)
 
                 # if field is optional annotated type (e.g., `VersionStr | None`)
                 if typing.get_origin(field_params.annotation) is typing.Union:
                     annotated_type = field_params.annotation.__args__[0]
-                    # weird case: optional listeral list fields
+                    # weird case: optional literal list fields
                     if not isinstance(annotated_type, typing._LiteralGenericAlias):
-                        field_type = format_type_string(
-                            str(annotated_type.__args__[0]))
+                        field_type = format_type_string(annotated_type.__args__[0])
                     metadata = getattr(annotated_type, "__metadata__", None)
                     field_annotation = find_field_data(metadata)
                     if field_annotation:
@@ -242,7 +239,7 @@ class KitbashModelDirective(SphinxDirective):
         return class_node
 
 
-def find_field_data(metadata: metadata) -> FieldInfo:
+def find_field_data(metadata: dict[str, typing.Any]) -> FieldInfo:
     """Iterate over an annotated type's metadata and return the first instance
     of a FieldInfo object. This is to account for fields having option
     before_validators and after_validators.
@@ -262,7 +259,7 @@ def find_field_data(metadata: metadata) -> FieldInfo:
     return None
 
 
-def is_deprecated(model: Type[object], field: str) -> str:
+def is_deprecated(model: typing.Type[object], field: str) -> str:
     """Check to see whether the field's deprecated parameter is truthy or falsy.
     If truthy, it will return the parameter's value with a standard "Deprecated."
     prefix.
@@ -274,7 +271,7 @@ def is_deprecated(model: Type[object], field: str) -> str:
     -------
 
     """
-    field_params = model.__fields__[field]
+    field_params = model.model_fields[field]
     warning = getattr(field_params, "deprecated", None)
 
     if warning:
@@ -302,9 +299,9 @@ def create_key_node(key_name: str, deprecated_message: str, key_type: str, key_d
     key_node += title_node
 
     if deprecated_message:
-        deprecated_node = nodes.admonition()
-        deprecated_node["classes"] = ["important"]
-        deprecated_node += nodes.title(text="Important")
+        deprecated_node = nodes.important()
+        # deprecated_node["classes"] = "important"
+        # deprecated_node += nodes.title(text="Important")
         deprecated_node += parse_rst_description(deprecated_message)
         key_node += deprecated_node
 
@@ -353,20 +350,19 @@ def build_examples_block(key_name: str, example: str) -> nodes.literal_block:
     -------
 
     """
-    examples_block = nodes.literal_block()
-    examples_block["classes"] = ["yaml"]
 
     try:
         yaml_str = yaml.dump(yaml.safe_load(example), default_flow_style=False)
-        yaml_str = yaml_str.replace("- ", "  - ")
+        yaml_str = yaml_str.replace("- ", "  - ").rstrip("\n")
         # yaml_str = textwrap.indent(yaml_string, "  ")
     except yaml.YAMLError as e:
         warnings.warn(
             f"Invalid YAML for key {key_name}: {e}", category=UserWarning)
         yaml_str = example
 
-    # examples_block += nodes.Text(f'{key_name.rsplit(".", maxsplit=1)[-1]}: \n')
-    examples_block += nodes.Text(yaml_str)
+    # f'{key_name.rsplit(".", maxsplit=1)[-1]}: \n'
+    examples_block = nodes.literal_block(text=yaml_str)
+    examples_block["language"] = "yaml"
 
     return examples_block
 
@@ -390,18 +386,18 @@ def create_table_node(values: list[list[str]]) -> nodes.container:
     tgroup = nodes.tgroup(cols=2)
     table += tgroup
 
-    tgroup += nodes.colspec(colwidth=1)
-    tgroup += nodes.colspec(colwidth=1)
+    tgroup += nodes.colspec(colwidth=50)
+    tgroup += nodes.colspec(colwidth=50)
 
     thead = nodes.thead()
     header_row = nodes.row()
 
     values_entry = nodes.entry()
-    values_entry += nodes.Text("Values")
+    values_entry += nodes.paragraph(text="Values")
     header_row += values_entry
 
     desc_entry = nodes.entry()
-    desc_entry += nodes.Text("Description")
+    desc_entry += nodes.paragraph(text="Description")
     header_row += desc_entry
 
     thead += header_row
@@ -430,9 +426,11 @@ def create_table_row(values: list[str]) -> nodes.row:
 
     """
     row = nodes.row()
-
+    
     value_entry = nodes.entry()
-    value_entry += nodes.literal(text=values[0])
+    value_p = nodes.paragraph()
+    value_p += nodes.literal(text=values[0])
+    value_entry += value_p
     row += value_entry
 
     desc_entry = nodes.entry()
@@ -443,7 +441,7 @@ def create_table_row(values: list[str]) -> nodes.row:
 
 
 # this is kinda gross
-def get_annotation_docstring(cls: Type[object], annotation_name: str) -> str:
+def get_annotation_docstring(cls: typing.Type[object], annotation_name: str) -> str:
     """Traverse class and return annotation docstring.
 
     Traverses a class AST until it finds the provided annotation attribute. If
@@ -457,8 +455,8 @@ def get_annotation_docstring(cls: Type[object], annotation_name: str) -> str:
     -------
 
     """
-    code = inspect.getsource(cls)
-    tree = ast.parse(code)
+    source = inspect.getsource(cls)
+    tree = ast.parse(textwrap.dedent(source))
 
     found = False
     docstring = None
@@ -475,7 +473,7 @@ def get_annotation_docstring(cls: Type[object], annotation_name: str) -> str:
 
 
 # also kinda gross
-def get_enum_member_docstring(cls: Type[object], enum_member: str) -> str:
+def get_enum_member_docstring(cls: typing.Type[object], enum_member: str) -> str:
     """Traverse class and return enum member docstring.
 
     Traverses a class AST until it finds the provided enum attribute. If the enum
@@ -490,7 +488,7 @@ def get_enum_member_docstring(cls: Type[object], enum_member: str) -> str:
 
     """
     source = inspect.getsource(cls)
-    tree = ast.parse(source)
+    tree = ast.parse(textwrap.dedent(source))
 
     for node in tree.body:
         for i, inner_node in enumerate(node.body):
@@ -504,7 +502,7 @@ def get_enum_member_docstring(cls: Type[object], enum_member: str) -> str:
     return None
 
 
-def get_enum_values(enum_class: Type[object]) -> list[list[str]]:
+def get_enum_values(enum_class: typing.Type[object]) -> list[list[str]]:
     """Get enum values and docstrings.
 
     Traverses an enum class, returning a list of tuples, where each tuple
@@ -566,18 +564,23 @@ def strip_whitespace(rst_desc: str) -> str:
       str: dedented string that can be parsed as rST
 
     """
+
     if rst_desc:
+        # This is used instead of textwrap.dedent() to account for
+        # docstrings starting with the line continuation character.
         lines = rst_desc.splitlines()
         first_line = lines[0]
         remaining_lines = lines[1:]
+
         dedented_remaining_lines = textwrap.dedent(
             "\n".join(remaining_lines)).splitlines()
-        return "\n".join([first_line, *dedented_remaining_lines])
+
+        return "\n".join([first_line.strip(), *dedented_remaining_lines])
 
     return ""
 
 
-def format_type_string(type_str: str) -> str:
+def format_type_string(type_str: typing.Any) -> str:
     """Format a python type string.
 
     Accepts a type string and converts it it to a more user-friendly
@@ -585,7 +588,7 @@ def format_type_string(type_str: str) -> str:
 
     Parameters
     ----------
-      type_str (str): string representation of a Python type
+      type_str (typing.Any): a Python type
 
     Returns
     -------
@@ -594,19 +597,12 @@ def format_type_string(type_str: str) -> str:
     """
     pattern = r"Literal\[(.*?)\]"
 
-    if re.search(pattern, type_str):
-        string_list = re.search(pattern, type_str).group(1)
+    if re.search(pattern, str(type_str)):
+        string_list = re.search(pattern, str(type_str)).group(1)
         list_items = re.findall(r"'([^']*)'", string_list)
         return f"Any of: {list_items}"
 
-    start = type_str.find("'") + 1
-    end = type_str.rfind("'")
-
-    # band-aid
-    if end == -1:
-        return type_str
-
-    return type_str[start:end]
+    return type_str.__name__
 
 
 def setup(app: Sphinx) -> ExtensionMetadata:
