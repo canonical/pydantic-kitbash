@@ -150,14 +150,14 @@ def test_build_valid_examples_block():
     # of the rendered output being identical. This test could be improved
     # by using publish_doctree and the Sphinx HTML writer, which I couldn't
     # seem to get working.
-    yaml_str = "test: [good, nice]"
+    yaml_str = "test: {subkey: [good, nice]}"
     yaml_str = yaml.dump(yaml.safe_load(yaml_str), default_flow_style=False)
     yaml_str = yaml_str.replace("- ", "  - ").rstrip("\n")
     
     expected = nodes.literal_block(text=yaml_str)
     expected["language"] = "yaml"
 
-    actual = build_examples_block("", yaml_str)
+    actual = build_examples_block("test", "subkey: [good, nice]")
 
     # comparing strings because docutils `__eq__`
     # method compares by identity rather than state

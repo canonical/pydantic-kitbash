@@ -356,8 +356,12 @@ def build_examples_block(key_name: str, example: str) -> nodes.literal_block:
 
     try:
         yaml_str = yaml.dump(yaml.safe_load(example), default_flow_style=False)
-        yaml_str = yaml_str.replace("- ", "  - ").rstrip("\n")
-        # yaml_str = textwrap.indent(yaml_string, "  ")
+        yaml_str = yaml_str.replace("- ", "  - ").rstrip("...\n")
+        if len(yaml_str.splitlines()) == 1:
+            yaml_str = f"{key_name.rsplit('.', maxsplit=1)[-1]}: {yaml_str}"
+        else:
+            yaml_str = textwrap.indent(yaml_str, "  ")
+            yaml_str = f"{key_name.rsplit('.', maxsplit=1)[-1]}:\n{yaml_str}"
     except yaml.YAMLError as e:
         warnings.warn(f"Invalid YAML for key {key_name}: {e}", category=UserWarning)
         yaml_str = example
@@ -616,7 +620,7 @@ def setup(app: Sphinx) -> ExtensionMetadata:
 
     Returns
     -------
-      ExtensionMetadata: xtension metadata
+      ExtensionMetadata: Extension metadata
 
     """
     app.add_directive("kitbash-field", KitbashFieldDirective)
