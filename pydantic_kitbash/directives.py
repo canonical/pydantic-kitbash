@@ -179,7 +179,7 @@ class KitbashModelDirective(SphinxDirective):
 
             if not is_auto_generated and deprecation_warning is None or field in include_deprecated:
                 # grab pydantic field data (need desc and examples)
-                field_params = pydantic_class.__fields__[field]
+                field_params = pydantic_class.model_fields[field]
 
                 if field_params.alias:
                     field_alias = field_params.alias
