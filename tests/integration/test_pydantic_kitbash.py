@@ -7,13 +7,13 @@ import pytest
 
 
 @pytest.fixture
-def example_project(request, tmp_path) -> Path:
+def example_project(request) -> Path:
     project_root = request.config.rootpath
-    example_dir = project_root / "tests" / "integration" / "example"
+    example_dir = project_root / "tests/integration/example"
 
     # Copy the project into the test's own temporary dir, to avoid clobbering
     # the sources.
-    target_dir = tmp_path / "example"
+    target_dir = Path().resolve() / "example"
     shutil.copytree(example_dir, target_dir)
 
     return target_dir
@@ -54,3 +54,5 @@ def test_pydantic_kitbash_integration(example_project):
     assert soup.find("span", {"class": "nt"}).text == "test"
     assert soup.find("span", {"class": "p"}).text == ":"
     assert soup.find("span", {"class": "l l-Scalar l-Scalar-Plain"}).text == "val1"
+
+    shutil.rmtree(example_project)

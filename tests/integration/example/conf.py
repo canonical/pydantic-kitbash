@@ -1,10 +1,8 @@
 import pathlib
 import sys
 
-project_dir = pathlib.Path().resolve()
+project_dir = pathlib.Path("..").resolve()
 sys.path.insert(0, str(project_dir.absolute()))
-sys.path.append(str(pathlib.Path("_ext").resolve()))
-print(sys.path)
 
 project = "Pydantic Kitbash"
 author = "Starcraft Engineering"
@@ -12,5 +10,5 @@ author = "Starcraft Engineering"
 html_title = project
 
 extensions = [
-    "kitbash",
+    "pydantic_kitbash.directives",
 ]

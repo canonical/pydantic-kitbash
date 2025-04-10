@@ -2,4 +2,4 @@
 Fields
 ======
 
-.. kitbash-field:: project.MockModel mock_field
+.. kitbash-field:: example.project.MockModel mock_field
