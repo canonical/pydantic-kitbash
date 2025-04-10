@@ -1,27 +1,30 @@
 import enum
-import pydantic
-import pytest
 import typing
-import yaml
-
-from docutils import nodes
-from docutils.core import publish_doctree
 from typing import Annotated
 
+import pydantic
+import pytest
+import yaml
+from docutils import nodes
+from docutils.core import publish_doctree
 from pydantic_kitbash.directives import (
-    find_field_data,
-    is_deprecated,
-    create_key_node,
     build_examples_block,
+    create_field_node,
     create_table_node,
-    create_table_row,
+    find_field_data,
+    format_type_string,
     get_annotation_docstring,
     get_enum_member_docstring,
     get_enum_values,
+    is_deprecated,
+    is_enum_type,
     parse_rst_description,
     strip_whitespace,
-    format_type_string,
 )
+
+
+class EnumType(enum.Enum):
+    VALUE = "value"
 
 
 def validator(cls, value: str) -> str:
@@ -42,6 +45,11 @@ TYPE_NO_FIELD = Annotated[
     str,
     pydantic.AfterValidator(validator),
     pydantic.BeforeValidator(validator),
+]
+
+ENUM_TYPE = Annotated[
+    EnumType,
+    pydantic.Field(description="Enum field."),
 ]
 
 RST_SAMPLE = """This is an rST sample.
@@ -96,22 +104,16 @@ def test_find_field_data():
 # Test for `find_field_data` when none is present
 def test_find_field_data_none():
     expected = None
-    actual = find_field_data(TYPE_NO_FIELD.__metadata__)\
-    
+    actual = find_field_data(TYPE_NO_FIELD.__metadata__)
     assert expected == actual
 
 
 # Test for `is_deprecated`
 def test_is_deprecated():
-
     class Model(pydantic.BaseModel):
         field1: TEST_TYPE
-        field2: str = pydantic.Field(
-            deprecated=False
-        )
-        field3: str = pydantic.Field(
-            deprecated=True
-        )
+        field2: str = pydantic.Field(deprecated=False)
+        field3: str = pydantic.Field(deprecated=True)
         union_field: str | None = pydantic.Field(
             deprecated="pls don't use this :)",
         )
@@ -122,8 +124,24 @@ def test_is_deprecated():
     assert is_deprecated(Model, "union_field") == "Deprecated. pls don't use this :)"
 
 
-# Test for `create_key_node`
-def test_create_key_node():
+# Test for `is_enum_type`
+def test_is_enum_type():
+    class Model(pydantic.BaseModel):
+        field: EnumType
+
+    assert is_enum_type(Model.model_fields["field"].annotation)
+
+
+# Test for `is_enum_type` when false
+def test_is_enum_type_false():
+    class Model(pydantic.BaseModel):
+        field: int
+
+    assert not is_enum_type(Model.model_fields["field"].annotation)
+
+
+# Test for `create_field_node`
+def test_create_field_node():
     # need to set up section node manually
     expected = nodes.section(ids=["key-name"])
     expected["classes"].append("kitbash-entry")
@@ -134,12 +152,9 @@ def test_create_key_node():
     # "Values" and "Examples" are tested separately because while
     # their HTML output is identical, their docutils are structured
     # differently from the publich_doctree output
-    actual = create_key_node("key-name",
-                             "Don't use this.",
-                             "str",
-                             "This is the key description",
-                             None,
-                             None)
+    actual = create_field_node(
+        "key-name", "Don't use this.", "str", "This is the key description", None, None
+    )
 
     assert str(expected) == str(actual)
 
@@ -153,7 +168,7 @@ def test_build_valid_examples_block():
     yaml_str = "test: {subkey: [good, nice]}"
     yaml_str = yaml.dump(yaml.safe_load(yaml_str), default_flow_style=False)
     yaml_str = yaml_str.replace("- ", "  - ").rstrip("\n")
-    
+
     expected = nodes.literal_block(text=yaml_str)
     expected["language"] = "yaml"
 
@@ -183,7 +198,7 @@ def test_build_invalid_examples_block():
 def test_create_table_node():
     expected = nodes.container()
     expected += publish_doctree(TABLE_RST).children
-    
+
     actual = create_table_node([["1.1", "1.2"], ["2.1", "2.2"]])
 
     # comparing strings because docutils `__eq__`
@@ -193,7 +208,6 @@ def test_create_table_node():
 
 # Test for `get_annotation_docstring`
 def test_get_annotation_docstring():
-
     class MockModel(pydantic.BaseModel):
         field1: int
 
@@ -202,13 +216,12 @@ def test_get_annotation_docstring():
 
         """Should never see this docstring."""
 
-    assert get_annotation_docstring(MockModel, "field1") == None
+    assert get_annotation_docstring(MockModel, "field1") is None
     assert get_annotation_docstring(MockModel, "field2") == "The second field."
 
 
 # Test for `get_enum_member_docstring`
 def test_get_enum_member_docstring():
-
     class MockEnum(enum.Enum):
         VAL1 = "one"
 
@@ -217,13 +230,12 @@ def test_get_enum_member_docstring():
 
         """Should never see this docstring."""
 
-    assert get_enum_member_docstring(MockEnum, "VAL1") == None
+    assert get_enum_member_docstring(MockEnum, "VAL1") is None
     assert get_enum_member_docstring(MockEnum, "VAL2") == "This is the second value."
 
 
 # Test for `get_enum_values`
 def test_get_enum_values():
-
     class MockEnum(enum.Enum):
         VAL1 = "one"
         """Docstring 1."""
@@ -231,7 +243,10 @@ def test_get_enum_values():
         VAL2 = "two"
         """Docstring 2."""
 
-    assert get_enum_values(MockEnum) == [["one", "Docstring 1."], ["two", "Docstring 2."]]
+    assert get_enum_values(MockEnum) == [
+        ["one", "Docstring 1."],
+        ["two", "Docstring 2."],
+    ]
 
 
 # Test for `parse_rst_description`
@@ -249,13 +264,13 @@ def test_parse_rst_description():
 # Test for `strip_whitespace`
 def test_strip_whitespace():
     docstring1 = """Description.
-      
+
       **Examples**
 
       .. code-block:: yaml
-      
+
           test: passed
-      
+
       """
 
     docstring2 = """\
@@ -264,12 +279,14 @@ def test_strip_whitespace():
       **Examples**
 
       .. code-block:: yaml
-      
+
           test: passed
-      
+
       """
 
-    expected = "Description.\n\n**Examples**\n\n.. code-block:: yaml\n\n    test: passed\n"
+    expected = (
+        "Description.\n\n**Examples**\n\n.. code-block:: yaml\n\n    test: passed\n"
+    )
 
     assert strip_whitespace(docstring1) == expected
     assert strip_whitespace(docstring2) == expected

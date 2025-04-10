@@ -1,14 +1,11 @@
 import enum
-import pydantic
-import pytest
-
-from docutils import nodes
-from docutils.core import publish_doctree
-from docutils.parsers.rst.states import Body, NestedStateMachine
-from pydantic_kitbash.directives import KitbashFieldDirective, strip_whitespace
-from sphinx.util.docutils import LoggingReporter
 from typing import Annotated
 
+import pydantic
+import pytest
+from docutils import nodes
+from docutils.core import publish_doctree
+from pydantic_kitbash.directives import KitbashFieldDirective, strip_whitespace
 
 LIST_TABLE_RST = """
 
@@ -69,8 +66,7 @@ class MockModel(pydantic.BaseModel):
 
 
 def test_kitbash_field_invalid():
-
-    class DirectiveState():
+    class DirectiveState:
         name = "kitbash-field"
         arguments = [__module__ + ".MockModel", "oops"]
         options = {}
@@ -78,15 +74,13 @@ def test_kitbash_field_invalid():
 
     try:
         KitbashFieldDirective.run(DirectiveState)[0]
-        assert False
+        pytest.fail("Invalid fields should raise a ValueError.")
     except ValueError:
         assert True
 
-    
 
 def test_kitbash_field():
-
-    class DirectiveState():
+    class DirectiveState:
         name = "kitbash-field"
         arguments = [__module__ + ".MockModel", "mock_field"]
         options = {}
@@ -96,9 +90,9 @@ def test_kitbash_field():
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="test")
     expected += title_node
-    
+
     field_entry = """\
-    
+
     .. important::
 
         Deprecated. ew.
@@ -121,22 +115,19 @@ def test_kitbash_field():
 
 
 def test_kitbash_field_prepend_name():
-
-    class DirectiveState():
+    class DirectiveState:
         name = "kitbash-field"
         arguments = [__module__ + ".MockModel", "mock_field"]
-        options = {
-            "prepend-name": "app"
-        }
+        options = {"prepend-name": "app"}
         content = []
 
     expected = nodes.section(ids=["app.test"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="app.test")
     expected += title_node
-    
+
     field_entry = """\
-    
+
     .. important::
 
         Deprecated. ew.
@@ -159,22 +150,19 @@ def test_kitbash_field_prepend_name():
 
 
 def test_kitbash_field_append_name():
-
-    class DirectiveState():
+    class DirectiveState:
         name = "kitbash-field"
         arguments = [__module__ + ".MockModel", "mock_field"]
-        options = {
-            "append-name": "<part-name>"
-        }
+        options = {"append-name": "<part-name>"}
         content = []
 
     expected = nodes.section(ids=["test.<part-name>"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="test.<part-name>")
     expected += title_node
-    
+
     field_entry = """\
-    
+
     .. important::
 
         Deprecated. ew.
@@ -197,22 +185,19 @@ def test_kitbash_field_append_name():
 
 
 def test_kitbash_field_override_name():
-
-    class DirectiveState():
+    class DirectiveState:
         name = "kitbash-field"
         arguments = [__module__ + ".MockModel", "mock_field"]
-        options = {
-            "override-name": "override"
-        }
+        options = {"override-name": "override"}
         content = []
 
     expected = nodes.section(ids=["override"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="override")
     expected += title_node
-    
+
     field_entry = """\
-    
+
     .. important::
 
         Deprecated. ew.
@@ -235,8 +220,7 @@ def test_kitbash_field_override_name():
 
 
 def test_kitbash_field_skip_type():
-
-    class DirectiveState():
+    class DirectiveState:
         name = "kitbash-field"
         arguments = [__module__ + ".MockModel", "mock_field"]
         options = {
@@ -248,9 +232,9 @@ def test_kitbash_field_skip_type():
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="test")
     expected += title_node
-    
+
     field_entry = """\
-    
+
     .. important::
 
         Deprecated. ew.
@@ -269,8 +253,7 @@ def test_kitbash_field_skip_type():
 
 
 def test_kitbash_field_skip_examples():
-
-    class DirectiveState():
+    class DirectiveState:
         name = "kitbash-field"
         arguments = [__module__ + ".MockModel", "bad_example"]
         options = {
@@ -282,7 +265,7 @@ def test_kitbash_field_skip_examples():
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="bad_example")
     expected += title_node
-    
+
     field_entry = """\
 
     **Type**
@@ -303,8 +286,7 @@ def test_kitbash_field_skip_examples():
 
 
 def test_kitbash_field_enum():
-
-    class DirectiveState():
+    class DirectiveState:
         name = "kitbash-field"
         arguments = [__module__ + ".MockModel", "enum_field"]
         options = {}
@@ -314,7 +296,7 @@ def test_kitbash_field_enum():
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="enum_field")
     expected += title_node
-    
+
     field_entry = """\
 
     **Type**
@@ -336,13 +318,12 @@ def test_kitbash_field_enum():
     expected += table_container
 
     actual = KitbashFieldDirective.run(DirectiveState)[0]
-    print (f"\n{expected}\n\n{actual}\n")
+    print(f"\n{expected}\n\n{actual}\n")
     assert str(expected) == str(actual)
 
 
 def test_kitbash_field_union_type():
-
-    class DirectiveState():
+    class DirectiveState:
         name = "kitbash-field"
         arguments = [__module__ + ".MockModel", "uniontype_field"]
         options = {}
@@ -352,7 +333,7 @@ def test_kitbash_field_union_type():
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="uniontype_field")
     expected += title_node
-    
+
     field_entry = """\
 
     **Type**
@@ -373,8 +354,7 @@ def test_kitbash_field_union_type():
 
 
 def test_kitbash_field_enum_union():
-
-    class DirectiveState():
+    class DirectiveState:
         name = "kitbash-field"
         arguments = [__module__ + ".MockModel", "enum_uniontype"]
         options = {}
@@ -384,7 +364,7 @@ def test_kitbash_field_enum_union():
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="enum_uniontype")
     expected += title_node
-    
+
     field_entry = """\
 
     **Type**
@@ -411,8 +391,7 @@ def test_kitbash_field_enum_union():
 
 
 def test_kitbash_field_typing_union():
-
-    class DirectiveState():
+    class DirectiveState:
         name = "kitbash-field"
         arguments = [__module__ + ".MockModel", "typing_union"]
         options = {
@@ -424,7 +403,7 @@ def test_kitbash_field_typing_union():
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="typing_union")
     expected += title_node
-    
+
     field_entry = """\
 
     **Type**

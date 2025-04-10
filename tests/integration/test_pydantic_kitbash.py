@@ -1,11 +1,10 @@
+import shutil
+import subprocess
+from pathlib import Path
+
 import bs4
 import pydantic
 import pytest
-import shutil
-import subprocess
-
-from datetime import datetime
-from pathlib import Path
 
 
 class MockModel(pydantic.BaseModel):
@@ -52,9 +51,9 @@ def test_pydantic_kitbash_integration(example_project):
 
     # Check if admonition is formatted correctly
     deprecation_admonition = soup.find("div", {"class": "admonition important"})
-    admonition_content = soup.find_all("p")
-    assert admonition_content[0].text == "Important" # admonition title
-    assert admonition_content[1].text == "Deprecated. ew." # admonition content
+    admonition_content = deprecation_admonition.find_all("p")
+    assert admonition_content[0].text == "Important"  # admonition title
+    assert admonition_content[1].text == "Deprecated. ew."  # admonition content
 
     # Check if type is correct
     field_type = soup.find("code", {"class": "docutils literal notranslate"}).text

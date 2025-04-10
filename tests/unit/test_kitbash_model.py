@@ -1,17 +1,13 @@
 import enum
-import pydantic
-import pytest
-
-from docutils import nodes
-from docutils.core import publish_doctree
-from docutils.parsers.rst.states import Body, NestedStateMachine
-from pydantic_kitbash.directives import KitbashModelDirective, strip_whitespace
-from sphinx.util.docutils import LoggingReporter
 from typing import Annotated
 
+import pydantic
+from docutils import nodes
+from docutils.core import publish_doctree
+from pydantic_kitbash.directives import KitbashModelDirective, strip_whitespace
 
 MOCK_FIELD_RST = """\
-    
+
 .. important::
 
     Deprecated. ew.
@@ -132,13 +128,12 @@ class MockModel(pydantic.BaseModel):
     typing_union: TEST_TYPE | None
 
 
-class OopsNoModel():
+class OopsNoModel:
     field1: int
 
 
 def test_kitbash_model_invalid():
-
-    class DirectiveState():
+    class DirectiveState:
         name = "kitbash-model"
         arguments = [__module__ + ".OopsNoModel"]
         options = {}
@@ -148,8 +143,7 @@ def test_kitbash_model_invalid():
 
 
 def test_kitbash_model():
-
-    class DirectiveState():
+    class DirectiveState:
         name = "kitbash-model"
         arguments = [__module__ + ".MockModel"]
         options = {}
@@ -207,8 +201,7 @@ def test_kitbash_model():
 
 
 def test_kitbash_model_content():
-
-    class DirectiveState():
+    class DirectiveState:
         name = "kitbash-model"
         arguments = [__module__ + ".MockModel"]
         options = {}
@@ -217,8 +210,7 @@ def test_kitbash_model_content():
     expected = []
 
     rendered_content = publish_doctree("``Test content``").children
-    for node in rendered_content:
-        expected.append(node)
+    expected = list(rendered_content)
 
     uniontype_section = nodes.section(ids=["uniontype_field"])
     uniontype_section["classes"].append("kitbash-entry")
@@ -270,8 +262,7 @@ def test_kitbash_model_content():
 
 
 def test_kitbash_model_include_deprecated():
-
-    class DirectiveState():
+    class DirectiveState:
         name = "kitbash-model"
         arguments = [__module__ + ".MockModel"]
         options = {
@@ -340,8 +331,7 @@ def test_kitbash_model_include_deprecated():
 
 
 def test_kitbash_model_prepend_name():
-
-    class DirectiveState():
+    class DirectiveState:
         name = "kitbash-model"
         arguments = [__module__ + ".MockModel"]
         options = {
@@ -401,8 +391,7 @@ def test_kitbash_model_prepend_name():
 
 
 def test_kitbash_model_append_name():
-
-    class DirectiveState():
+    class DirectiveState:
         name = "kitbash-model"
         arguments = [__module__ + ".MockModel"]
         options = {
