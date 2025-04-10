@@ -127,6 +127,18 @@ wheels = [
 ]
 
 [[package]]
+name = "bs4"
+version = "0.0.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "beautifulsoup4" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c9/aa/4acaf814ff901145da37332e05bb510452ebed97bc9602695059dd46ef39/bs4-0.0.2.tar.gz", hash = "sha256:a48685c58f50fe127722417bae83fe6badf500d54b55f7e39ffe43b798653925", size = 698 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/51/bb/bf7aab772a159614954d84aa832c129624ba6c32faa559dfb200a534e50b/bs4-0.0.2-py2.py3-none-any.whl", hash = "sha256:abf8742c0805ef7f662dce4b51cca104cffe52b835238afc169142ab9b3fbccc", size = 1189 },
+]
+
+[[package]]
 name = "build"
 version = "1.2.2.post1"
 source = { registry = "https://pypi.org/simple" }
@@ -455,7 +467,7 @@ name = "importlib-metadata"
 version = "8.6.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "zipp" },
+    { name = "zipp", marker = "python_full_version < '3.13'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/33/08/c1395a292bb23fd03bdf572a1357c5a733d3eecbab877641ceacab23db6e/importlib_metadata-8.6.1.tar.gz", hash = "sha256:310b41d755445d74569f993ccfc22838295d9fe005425094fad953d7f15c8580", size = 55767 }
 wheels = [
@@ -939,6 +951,71 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/86/aa/837821ecf0c022bbb74ca132e117c358321e72e7f9702d1b6a03758545e2/pydantic_core-2.27.2-pp310-pypy310_pp73-musllinux_1_1_armv7l.whl", hash = "sha256:0296abcb83a797db256b773f45773da397da75a08f5fcaef41f2044adec05f50", size = 2116582 },
     { url = "https://files.pythonhosted.org/packages/81/b0/5e74656e95623cbaa0a6278d16cf15e10a51f6002e3ec126541e95c29ea3/pydantic_core-2.27.2-pp310-pypy310_pp73-musllinux_1_1_x86_64.whl", hash = "sha256:0d75070718e369e452075a6017fbf187f788e17ed67a3abd47fa934d001863d9", size = 2151985 },
     { url = "https://files.pythonhosted.org/packages/63/37/3e32eeb2a451fddaa3898e2163746b0cffbbdbb4740d38372db0490d67f3/pydantic_core-2.27.2-pp310-pypy310_pp73-win_amd64.whl", hash = "sha256:7e17b560be3c98a8e3aa66ce828bdebb9e9ac6ad5466fba92eb74c4c95cb1151", size = 2004715 },
+]
+
+[[package]]
+name = "pydantic-kitbash"
+source = { editable = "." }
+
+[package.dev-dependencies]
+dev = [
+    { name = "bs4" },
+    { name = "build" },
+    { name = "coverage", extra = ["toml"] },
+    { name = "mypy", extra = ["reports"] },
+    { name = "pydantic" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-mock" },
+    { name = "types-colorama" },
+    { name = "types-pygments" },
+    { name = "types-setuptools" },
+]
+docs = [
+    { name = "canonical-sphinx" },
+    { name = "sphinx-autobuild" },
+    { name = "sphinx-lint" },
+    { name = "sphinx-pydantic" },
+    { name = "sphinx-toolbox" },
+    { name = "sphinxext-rediraffe" },
+]
+types = [
+    { name = "mypy", extra = ["reports"] },
+    { name = "types-colorama" },
+    { name = "types-pygments" },
+    { name = "types-setuptools" },
+]
+
+[package.metadata]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "bs4", specifier = ">=0.0.2" },
+    { name = "build", specifier = ">=0.7.0" },
+    { name = "coverage", extras = ["toml"], specifier = "~=7.4" },
+    { name = "mypy", extras = ["reports"], specifier = "~=1.15.0" },
+    { name = "pydantic", specifier = ">=2.10.6" },
+    { name = "pytest", specifier = "~=8.0" },
+    { name = "pytest-cov", specifier = "~=6.0" },
+    { name = "pytest-mock", specifier = "~=3.12" },
+    { name = "types-colorama" },
+    { name = "types-pygments" },
+    { name = "types-setuptools" },
+]
+docs = [
+    { name = "canonical-sphinx", specifier = "~=0.4.0" },
+    { name = "sphinx-autobuild", specifier = "~=2024.2" },
+    { name = "sphinx-lint", specifier = "~=1.0" },
+    { name = "sphinx-pydantic", specifier = "==0.1.1" },
+    { name = "sphinx-toolbox", specifier = "~=3.5" },
+    { name = "sphinxext-rediraffe", specifier = "==0.2.7" },
+]
+lint = []
+types = [
+    { name = "mypy", extras = ["reports"], specifier = "~=1.15.0" },
+    { name = "types-colorama" },
+    { name = "types-pygments" },
+    { name = "types-setuptools" },
 ]
 
 [[package]]
@@ -1471,67 +1548,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/09/d2/2eb5521072c9598886035c65c023f39f7384bcb73eed70794f469e34efac/standard_imghdr-3.10.14.tar.gz", hash = "sha256:2598fe2e7c540dbda34b233295e10957ab8dc8ac6f3bd9eaa8d38be167232e52", size = 5474 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/fb/d0/9852f70eb01f814843530c053542b72d30e9fbf74da7abb0107e71938389/standard_imghdr-3.10.14-py3-none-any.whl", hash = "sha256:cdf6883163349624dee9a81d2853a20260337c4cd41c04e99c082e01833a08e2", size = 5598 },
-]
-
-[[package]]
-name = "pydantic_kitbash"
-source = { editable = "." }
-
-[package.dev-dependencies]
-dev = [
-    { name = "build" },
-    { name = "coverage", extra = ["toml"] },
-    { name = "mypy", extra = ["reports"] },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "pytest-mock" },
-    { name = "types-colorama" },
-    { name = "types-pygments" },
-    { name = "types-setuptools" },
-]
-docs = [
-    { name = "canonical-sphinx" },
-    { name = "sphinx-autobuild" },
-    { name = "sphinx-lint" },
-    { name = "sphinx-pydantic" },
-    { name = "sphinx-toolbox" },
-    { name = "sphinxext-rediraffe" },
-]
-types = [
-    { name = "mypy", extra = ["reports"] },
-    { name = "types-colorama" },
-    { name = "types-pygments" },
-    { name = "types-setuptools" },
-]
-
-[package.metadata]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "build", specifier = ">=0.7.0" },
-    { name = "coverage", extras = ["toml"], specifier = "~=7.4" },
-    { name = "mypy", extras = ["reports"], specifier = "~=1.15.0" },
-    { name = "pytest", specifier = "~=8.0" },
-    { name = "pytest-cov", specifier = "~=6.0" },
-    { name = "pytest-mock", specifier = "~=3.12" },
-    { name = "types-colorama" },
-    { name = "types-pygments" },
-    { name = "types-setuptools" },
-]
-docs = [
-    { name = "canonical-sphinx", specifier = "~=0.4.0" },
-    { name = "sphinx-autobuild", specifier = "~=2024.2" },
-    { name = "sphinx-lint", specifier = "~=1.0" },
-    { name = "sphinx-pydantic", specifier = "==0.1.1" },
-    { name = "sphinx-toolbox", specifier = "~=3.5" },
-    { name = "sphinxext-rediraffe", specifier = "==0.2.7" },
-]
-lint = []
-types = [
-    { name = "mypy", extras = ["reports"], specifier = "~=1.15.0" },
-    { name = "types-colorama" },
-    { name = "types-pygments" },
-    { name = "types-setuptools" },
 ]
 
 [[package]]

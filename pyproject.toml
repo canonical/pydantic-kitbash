@@ -45,6 +45,8 @@ dev = [
     "types-Pygments",
     "types-colorama",
     "types-setuptools",
+    "pydantic>=2.10.6",
+    "bs4>=0.0.2",
 ]
 
 [tool.uv]
