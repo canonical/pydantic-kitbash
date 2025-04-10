@@ -956,6 +956,12 @@ wheels = [
 [[package]]
 name = "pydantic-kitbash"
 source = { editable = "." }
+dependencies = [
+    { name = "docutils" },
+    { name = "pydantic" },
+    { name = "pyyaml" },
+    { name = "sphinx" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -990,6 +996,12 @@ types = [
 ]
 
 [package.metadata]
+requires-dist = [
+    { name = "docutils", specifier = ">=0.21.2" },
+    { name = "pydantic", specifier = ">=2.10.6" },
+    { name = "pyyaml", specifier = ">=6.0.2" },
+    { name = "sphinx", specifier = ">=7.4.7" },
+]
 
 [package.metadata.requires-dev]
 dev = [

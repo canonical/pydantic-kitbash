@@ -3,7 +3,10 @@ name = "pydantic_kitbash"
 description = "Sphinx extension for documenting Pydantic models."
 dynamic = ["version", "readme"]
 dependencies = [
-
+    "docutils>=0.21.2",
+    "pydantic>=2.10.6",
+    "pyyaml>=6.0.2",
+    "sphinx>=7.4.7",
 ]
 classifiers = [
     "Development Status :: 1 - Planning",
@@ -13,9 +16,6 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 requires-python = ">=3.10"
-
-[project.scripts]
-starcraft-hello = "starcraft:hello"
 
 [dependency-groups]
 lint = [
@@ -28,9 +28,7 @@ types = [
     "types-setuptools",
 ]
 docs = [
-    "canonical-sphinx~=0.4.0",
     "sphinx-autobuild~=2024.2",
-    "sphinx-pydantic==0.1.1",
     "sphinx-toolbox~=3.5",
     "sphinx-lint~=1.0",
     "sphinxext-rediraffe==0.2.7",
@@ -45,11 +43,7 @@ dev = [
     "types-Pygments",
     "types-colorama",
     "types-setuptools",
-    "pydantic>=2.10.6",
     "bs4>=0.0.2",
-    "docutils>=0.21.2",
-    "pyyaml>=6.0.2",
-    "sphinx>=7.4.7",
 ]
 
 [tool.uv]

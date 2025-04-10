@@ -46,9 +46,6 @@ class KitbashFieldDirective(SphinxDirective):
         to produce a formatted output in accordance with Starcraft's YAML key
         documentation standard.
 
-        Args:
-            self: Object containing the directive's state.
-
         Returns:
             list[nodes.Node]: Well-formed list of nodes to render into field entry.
 
