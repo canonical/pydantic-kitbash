@@ -19,6 +19,7 @@ def example_project(request, tmp_path) -> Path:
     return target_dir
 
 
+@pytest.mark.slow
 def test_pydantic_kitbash_integration(example_project):
     build_dir = example_project / "_build"
     subprocess.check_call(
