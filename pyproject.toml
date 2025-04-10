@@ -47,6 +47,8 @@ dev = [
     "types-setuptools",
     "pydantic>=2.10.6",
     "bs4>=0.0.2",
+    "docutils>=0.21.2",
+    "pyyaml>=6.0.2",
 ]
 
 [tool.uv]
