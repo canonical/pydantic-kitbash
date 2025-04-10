@@ -1,6 +1,6 @@
 # This file is part of pydantic-kitbash.
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2025 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify it under the
 # terms of the GNU Lesser General Public License version 3, as published by the Free
@@ -93,7 +93,7 @@ class KitbashFieldDirective(SphinxDirective):
         # if field is optional "normal" type (e.g., str | None)
         if isinstance(field_params.annotation, types.UnionType):
             union_args = typing.get_args(field_params.annotation)
-            field_type = format_type_string(union_args[0])
+            field_type: str | None = format_type_string(union_args[0])
             if issubclass(union_args[0], enum.Enum):
                 description_str = (
                     union_args[0].__doc__
