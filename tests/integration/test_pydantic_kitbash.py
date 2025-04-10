@@ -3,17 +3,7 @@ import subprocess
 from pathlib import Path
 
 import bs4
-import pydantic
 import pytest
-
-
-class MockModel(pydantic.BaseModel):
-    mock_field: str = pydantic.Field(
-        description="description",
-        examples=["val1", "val2"],
-        alias="test",
-        deprecated="ew.",
-    )
 
 
 @pytest.fixture

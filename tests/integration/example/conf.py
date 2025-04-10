@@ -1,6 +1,8 @@
 import pathlib
 import sys
 
+project_dir = pathlib.Path().resolve()
+sys.path.insert(0, str(project_dir.absolute()))
 sys.path.append(str(pathlib.Path("_ext").resolve()))
 print(sys.path)
 
