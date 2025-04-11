@@ -45,7 +45,6 @@ extensions.extend(
         "sphinx.ext.viewcode",
         "sphinx.ext.coverage",
         "sphinx.ext.doctest",
-        "sphinx-pydantic",
         "sphinx_toolbox",
         "sphinx_toolbox.more_autodoc",
         "sphinx.ext.autodoc",  # Must be loaded after more_autodoc
@@ -54,6 +53,14 @@ extensions.extend(
 )
 
 # endregion
+
+exclude_patterns = [
+    "tutorials/index.rst",
+    "how-to-guides/index.rst",
+    "explanation/index.rst",
+    "reference/index.rst",
+    "release-notes/index.rst",
+]
 
 # region Options for extensions
 # Intersphinx extension
