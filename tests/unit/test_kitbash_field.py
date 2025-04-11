@@ -87,7 +87,7 @@ class MockModel(pydantic.BaseModel):
     typing_union: TEST_TYPE | None
 
 
-class FakeDirective(KitbashFieldDirective):
+class FakeFieldDirective(KitbashFieldDirective):
     """An override for testing only our additions."""
 
     @override
@@ -105,10 +105,10 @@ class FakeDirective(KitbashFieldDirective):
 
 
 @pytest.fixture
-def fake_directive(request: pytest.FixtureRequest) -> FakeDirective:
+def fake_field_directive(request: pytest.FixtureRequest) -> FakeFieldDirective:
     """This fixture can be parametrized to override the default values.
 
-    Most parameters are 1:1 with the init function of FakeDirective, but
+    Most parameters are 1:1 with the init function of FakeFieldDirective, but
     there is one exception - the "model_field" key can be used as a shorthand
     to more easily select a field on the MockModel in this file instead of
     passing a fully qualified module name.
@@ -118,13 +118,13 @@ def fake_directive(request: pytest.FixtureRequest) -> FakeDirective:
 
     # Handle the model_field shorthand
     if value := overrides.get("model_field"):
-        arguments = [fake_directive.__module__ + ".MockModel", value]
+        arguments = [fake_field_directive.__module__ + ".MockModel", value]
     elif value := overrides.get("arguments"):
         arguments = value
     else:
-        arguments = [fake_directive.__module__ + ".MockModel", "mock_field"]
+        arguments = [fake_field_directive.__module__ + ".MockModel", "mock_field"]
 
-    return FakeDirective(
+    return FakeFieldDirective(
         name=overrides.get("name", "kitbash-field"),
         arguments=arguments,
         options=overrides.get("options", {}),
@@ -133,16 +133,16 @@ def fake_directive(request: pytest.FixtureRequest) -> FakeDirective:
 
 
 @pytest.mark.parametrize(
-    "fake_directive",
+    "fake_field_directive",
     [{"model_field": "i_dont_exist"}],
     indirect=True,
 )
-def test_kitbash_field_invalid(fake_directive: FakeDirective):
+def test_kitbash_field_invalid(fake_field_directive: FakeFieldDirective):
     with pytest.raises(ValueError, match="Could not find field: i_dont_exist"):
-        fake_directive.run()
+        fake_field_directive.run()
 
 
-def test_kitbash_field(fake_directive: FakeDirective):
+def test_kitbash_field(fake_field_directive: FakeFieldDirective):
     expected = nodes.section(ids=["test"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="test")
@@ -166,13 +166,13 @@ def test_kitbash_field(fake_directive: FakeDirective):
 
     field_entry = strip_whitespace(field_entry)
     expected += publish_doctree(field_entry).children
-    actual = fake_directive.run()[0]
+    actual = fake_field_directive.run()[0]
 
     assert str(expected) == str(actual)
 
 
 @pytest.mark.parametrize(
-    ("fake_directive", "title_text"),
+    ("fake_field_directive", "title_text"),
     [
         pytest.param(
             {"options": {"override-name": "override"}}, "override", id="override-name"
@@ -182,9 +182,11 @@ def test_kitbash_field(fake_directive: FakeDirective):
         ),
         pytest.param({"options": {"append-name": "app"}}, "test.app", id="append-name"),
     ],
-    indirect=["fake_directive"],
+    indirect=["fake_field_directive"],
 )
-def test_kitbash_field_options(fake_directive: FakeDirective, title_text: str):
+def test_kitbash_field_options(
+    fake_field_directive: FakeFieldDirective, title_text: str
+):
     expected = nodes.section(ids=[title_text])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text=title_text)
@@ -208,15 +210,15 @@ def test_kitbash_field_options(fake_directive: FakeDirective, title_text: str):
 
     field_entry = strip_whitespace(field_entry)
     expected += publish_doctree(field_entry).children
-    actual = fake_directive.run()[0]
+    actual = fake_field_directive.run()[0]
 
     assert str(expected) == str(actual)
 
 
 @pytest.mark.parametrize(
-    "fake_directive", [{"options": {"skip-type": True}}], indirect=True
+    "fake_field_directive", [{"options": {"skip-type": True}}], indirect=True
 )
-def test_kitbash_field_skip_type(fake_directive: FakeDirective):
+def test_kitbash_field_skip_type(fake_field_directive: FakeFieldDirective):
     expected = nodes.section(ids=["test"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="test")
@@ -236,17 +238,17 @@ def test_kitbash_field_skip_type(fake_directive: FakeDirective):
 
     field_entry = strip_whitespace(field_entry)
     expected += publish_doctree(field_entry).children
-    actual = fake_directive.run()[0]
+    actual = fake_field_directive.run()[0]
 
     assert str(expected) == str(actual)
 
 
 @pytest.mark.parametrize(
-    "fake_directive",
+    "fake_field_directive",
     [{"model_field": "bad_example", "options": {"skip-examples": True}}],
     indirect=True,
 )
-def test_kitbash_field_skip_examples(fake_directive: FakeDirective):
+def test_kitbash_field_skip_examples(fake_field_directive: FakeFieldDirective):
     expected = nodes.section(ids=["bad_example"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="bad_example")
@@ -266,17 +268,17 @@ def test_kitbash_field_skip_examples(fake_directive: FakeDirective):
 
     field_entry = strip_whitespace(field_entry)
     expected += publish_doctree(field_entry).children
-    actual = fake_directive.run()[0]
+    actual = fake_field_directive.run()[0]
 
     assert str(expected) == str(actual)
 
 
 @pytest.mark.parametrize(
-    "fake_directive",
+    "fake_field_directive",
     [{"model_field": "enum_field"}],
     indirect=True,
 )
-def test_kitbash_field_enum(fake_directive: FakeDirective):
+def test_kitbash_field_enum(fake_field_directive: FakeFieldDirective):
     expected = nodes.section(ids=["enum_field"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="enum_field")
@@ -302,16 +304,16 @@ def test_kitbash_field_enum(fake_directive: FakeDirective):
     table_container += publish_doctree(LIST_TABLE_RST).children
     expected += table_container
 
-    actual = fake_directive.run()[0]
+    actual = fake_field_directive.run()[0]
     assert str(expected) == str(actual)
 
 
 @pytest.mark.parametrize(
-    "fake_directive",
+    "fake_field_directive",
     [{"model_field": "uniontype_field"}],
     indirect=True,
 )
-def test_kitbash_field_union_type(fake_directive: FakeDirective):
+def test_kitbash_field_union_type(fake_field_directive: FakeFieldDirective):
     expected = nodes.section(ids=["uniontype_field"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="uniontype_field")
@@ -331,17 +333,17 @@ def test_kitbash_field_union_type(fake_directive: FakeDirective):
 
     field_entry = strip_whitespace(field_entry)
     expected += publish_doctree(field_entry).children
-    actual = fake_directive.run()[0]
+    actual = fake_field_directive.run()[0]
 
     assert str(expected) == str(actual)
 
 
 @pytest.mark.parametrize(
-    "fake_directive",
+    "fake_field_directive",
     [{"model_field": "enum_uniontype"}],
     indirect=True,
 )
-def test_kitbash_field_enum_union(fake_directive: FakeDirective):
+def test_kitbash_field_enum_union(fake_field_directive: FakeFieldDirective):
     expected = nodes.section(ids=["enum_uniontype"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="enum_uniontype")
@@ -367,17 +369,17 @@ def test_kitbash_field_enum_union(fake_directive: FakeDirective):
     table_container += publish_doctree(LIST_TABLE_RST).children
     expected += table_container
 
-    actual = fake_directive.run()[0]
+    actual = fake_field_directive.run()[0]
 
     assert str(expected) == str(actual)
 
 
 @pytest.mark.parametrize(
-    "fake_directive",
+    "fake_field_directive",
     [{"model_field": "typing_union", "options": {"skip-examples": True}}],
     indirect=True,
 )
-def test_kitbash_field_typing_union(fake_directive: FakeDirective):
+def test_kitbash_field_typing_union(fake_field_directive: FakeFieldDirective):
     expected = nodes.section(ids=["typing_union"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="typing_union")
@@ -397,6 +399,6 @@ def test_kitbash_field_typing_union(fake_directive: FakeDirective):
 
     field_entry = strip_whitespace(field_entry)
     expected += publish_doctree(field_entry).children
-    actual = fake_directive.run()[0]
+    actual = fake_field_directive.run()[0]
 
     assert str(expected) == str(actual)

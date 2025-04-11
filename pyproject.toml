@@ -3,9 +3,9 @@ name = "pydantic_kitbash"
 description = "Sphinx extension for documenting Pydantic models."
 dynamic = ["version", "readme"]
 dependencies = [
-    "docutils>=0.21.2",
+    "docutils",
     "pydantic~=2.0",
-    "pyyaml>=6.0.2",
+    "pyyaml",
     "sphinx~=7.0",
 ]
 classifiers = [
@@ -23,6 +23,7 @@ lint = [
 ]
 types = [
     "mypy[reports]~=1.15.0",
+    "types-docutils",
     "types-Pygments",
     "types-PyYAML",
     "types-colorama",

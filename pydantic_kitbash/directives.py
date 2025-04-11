@@ -33,7 +33,7 @@ import warnings
 import pydantic
 import yaml
 from docutils import nodes
-from docutils.core import publish_doctree
+from docutils.core import publish_doctree  # type: ignore[reportUnknownVariableType]
 from pydantic.fields import FieldInfo
 from sphinx.application import Sphinx
 from sphinx.util.docutils import SphinxDirective
@@ -232,7 +232,10 @@ class KitbashModelDirective(SphinxDirective):
                 enum_values = None
 
                 # if field is optional "normal" type (e.g., str | None)
-                if isinstance(field_params.annotation, types.UnionType):
+                if (
+                    field_params.annotation
+                    and typing.get_origin(field_params.annotation) is types.UnionType
+                ):
                     union_args = typing.get_args(field_params.annotation)
                     field_type = format_type_string(union_args[0])
                     if issubclass(union_args[0], enum.Enum):
@@ -246,7 +249,10 @@ class KitbashModelDirective(SphinxDirective):
                     field_type = format_type_string(field_params.annotation)
 
                 # if field is optional annotated type (e.g., `VersionStr | None`)
-                if typing.get_origin(field_params.annotation) is typing.Union:
+                if (
+                    field_params.annotation
+                    and typing.get_origin(field_params.annotation) is typing.Union
+                ):
                     annotated_type = field_params.annotation.__args__[0]
                     # weird case: optional literal list fields
                     if typing.get_origin(annotated_type) != typing.Literal:
@@ -266,7 +272,11 @@ class KitbashModelDirective(SphinxDirective):
                         if description_str is None
                         else description_str
                     )
-                    enum_values = get_enum_values(field_params.annotation)
+                    enum_values = (
+                        get_enum_values(field_params.annotation)
+                        if field_params.annotation
+                        else None
+                    )
 
                 # Get strings to concatenate with `field_alias`
                 name_prefix = self.options.get("prepend-name", "")
@@ -294,7 +304,10 @@ class KitbashModelDirective(SphinxDirective):
         return class_node
 
 
-def find_field_data(metadata: tuple[FieldInfo] | None) -> FieldInfo | None:
+def find_field_data(
+    metadata: tuple[pydantic.BeforeValidator, pydantic.AfterValidator, FieldInfo]
+    | None,
+) -> FieldInfo | None:
     """Retrieve a field's information from its metadata.
 
     Iterate over an annotated type's metadata and return the first instance
@@ -316,7 +329,7 @@ def find_field_data(metadata: tuple[FieldInfo] | None) -> FieldInfo | None:
     return None
 
 
-def is_deprecated(model: pydantic.BaseModel, field: str) -> str | None:
+def is_deprecated(model: type[pydantic.BaseModel], field: str) -> str | None:
     """Retrieve a field's deprecation message if one exists.
 
     Check to see whether the field's deprecated parameter is truthy or falsy.
@@ -616,7 +629,7 @@ def get_enum_values(enum_class: type[object]) -> list[list[str]]:
         list[list[str]]: The enum's values and docstrings.
 
     """
-    enum_docstrings = []
+    enum_docstrings: list[list[str]] = []
 
     for attr, attr_value in enum_class.__dict__.items():
         if not attr.startswith("_"):
@@ -640,12 +653,12 @@ def parse_rst_description(rst_desc: str) -> list[nodes.Node]:
         list[Node]: the docutils nodes produced by the rST
 
     """
-    rst_doc = publish_doctree(strip_whitespace(rst_desc))
+    rst_doc = typing.cast(nodes.document, publish_doctree(strip_whitespace(rst_desc)))
 
     return list(rst_doc.children)
 
 
-def strip_whitespace(rst_desc: str) -> str:
+def strip_whitespace(rst_desc: str | None) -> str:
     """Strip whitespace from multiline docstrings.
 
     Dedents whitespace from docstrings so that it can be successfully
@@ -674,11 +687,14 @@ def strip_whitespace(rst_desc: str) -> str:
     return ""
 
 
-def format_type_string(type_str: type[object]) -> str:
+def format_type_string(type_str: type[object] | typing.Any) -> str:  # noqa: ANN401
     """Format a python type string.
 
     Accepts a type string and converts it it to a more user-friendly
     string to be displayed in the output.
+
+    Input parameter is intentionally loosely typed, as the value
+    is not important. The function only cares about the type itself.
 
     Args:
         type_str (type[object]): A Python type.
@@ -687,14 +703,17 @@ def format_type_string(type_str: type[object]) -> str:
         str: A more human-friendly representation of the type.
 
     """
-    pattern = r"Literal\[(.*?)\]"
+    result = ""
 
+    pattern = r"Literal\[(.*?)\]"
     if match := re.search(pattern, str(type_str)):
         string_list = match.group(1)
         list_items = re.findall(r"'([^']*)'", string_list)
-        return f"Any of: {list_items}"
+        result = f"Any of: {list_items}"
+    elif type_str is not None:
+        result = type_str.__name__
 
-    return type_str.__name__
+    return result
 
 
 def setup(app: Sphinx) -> ExtensionMetadata:

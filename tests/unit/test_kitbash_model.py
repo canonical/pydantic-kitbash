@@ -15,12 +15,15 @@
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import enum
-from typing import Annotated
+from typing import Annotated, Any
 
 import pydantic
+import pytest
 from docutils import nodes
 from docutils.core import publish_doctree
+from docutils.statemachine import StringList
 from pydantic_kitbash.directives import KitbashModelDirective, strip_whitespace
+from typing_extensions import override
 
 MOCK_FIELD_RST = """\
 
@@ -105,7 +108,7 @@ LIST_TABLE_RST = """
 """
 
 
-def validator(cls, value: str) -> str:
+def validator(value: str) -> str:
     return value.strip()
 
 
@@ -148,23 +151,59 @@ class OopsNoModel:
     field1: int
 
 
-def test_kitbash_model_invalid():
-    class DirectiveState:
-        name = "kitbash-model"
-        arguments = [__module__ + ".OopsNoModel"]
-        options = {}
-        content = []
+class FakeModelDirective(KitbashModelDirective):
+    """An override for testing only our additions."""
 
-    assert KitbashModelDirective.run(DirectiveState) == []
+    @override
+    def __init__(
+        self,
+        name: str,
+        arguments: list[str],
+        options: dict[str, Any],
+        content: StringList,
+    ):
+        self.name = name
+        self.arguments = arguments
+        self.options = options
+        self.content = content
 
 
-def test_kitbash_model():
-    class DirectiveState:
-        name = "kitbash-model"
-        arguments = [__module__ + ".MockModel"]
-        options = {}
-        content = []
+@pytest.fixture
+def fake_model_directive(request: pytest.FixtureRequest) -> FakeModelDirective:
+    """This fixture can be parametrized to override the default values.
 
+    Most parameters are 1:1 with the init function of FakeModelDirective, but
+    there is one exception - the "model_field" key can be used as a shorthand
+    to more easily select a field on the MockModel in this file instead of
+    passing a fully qualified module name.
+    """
+    # Get any optional overrides from the fixtures
+    overrides = request.param if hasattr(request, "param") else {}
+
+    # Handle the model_field shorthand
+    if value := overrides.get("model"):
+        arguments = [fake_model_directive.__module__ + value]
+    elif value := overrides.get("arguments"):
+        arguments = value
+    else:
+        arguments = [fake_model_directive.__module__ + ".MockModel"]
+
+    return FakeModelDirective(
+        name=overrides.get("name", "kitbash-model"),
+        arguments=arguments,
+        options=overrides.get("options", {}),
+        content=overrides.get("content", []),
+    )
+
+
+@pytest.mark.parametrize(
+    "fake_model_directive", [{"model": ".OopsNoModel"}], indirect=True
+)
+def test_kitbash_model_invalid(fake_model_directive):
+    assert fake_model_directive.run() == []
+
+
+def test_kitbash_model(fake_model_directive):
     expected = []
 
     uniontype_section = nodes.section(ids=["uniontype_field"])
@@ -211,18 +250,15 @@ def test_kitbash_model():
     typing_union_section += publish_doctree(typing_union_rst).children
     expected.append(typing_union_section)
 
-    actual = KitbashModelDirective.run(DirectiveState)
+    actual = fake_model_directive.run()
 
     assert str(expected) == str(actual)
 
 
-def test_kitbash_model_content():
-    class DirectiveState:
-        name = "kitbash-model"
-        arguments = [__module__ + ".MockModel"]
-        options = {}
-        content = ["``Test content``"]
-
+@pytest.mark.parametrize(
+    "fake_model_directive", [{"content": ["``Test content``"]}], indirect=True
+)
+def test_kitbash_model_content(fake_model_directive):
     expected = []
 
     rendered_content = publish_doctree("``Test content``").children
@@ -272,20 +308,23 @@ def test_kitbash_model_content():
     typing_union_section += publish_doctree(typing_union_rst).children
     expected.append(typing_union_section)
 
-    actual = KitbashModelDirective.run(DirectiveState)
+    actual = fake_model_directive.run()
 
     assert str(expected) == str(actual)
 
 
-def test_kitbash_model_include_deprecated():
-    class DirectiveState:
-        name = "kitbash-model"
-        arguments = [__module__ + ".MockModel"]
-        options = {
-            "include-deprecated": "mock_field",
+@pytest.mark.parametrize(
+    "fake_model_directive",
+    [
+        {
+            "options": {
+                "include-deprecated": "mock_field",
+            }
         }
-        content = []
-
+    ],
+    indirect=True,
+)
+def test_kitbash_model_include_deprecated(fake_model_directive):
     expected = []
 
     mock_field_section = nodes.section(ids=["test"])
@@ -341,20 +380,23 @@ def test_kitbash_model_include_deprecated():
     typing_union_section += publish_doctree(typing_union_rst).children
     expected.append(typing_union_section)
 
-    actual = KitbashModelDirective.run(DirectiveState)
+    actual = fake_model_directive.run()
 
     assert str(expected) == str(actual)
 
 
-def test_kitbash_model_prepend_name():
-    class DirectiveState:
-        name = "kitbash-model"
-        arguments = [__module__ + ".MockModel"]
-        options = {
-            "prepend-name": "prefix",
+@pytest.mark.parametrize(
+    "fake_model_directive",
+    [
+        {
+            "options": {
+                "prepend-name": "prefix",
+            }
         }
-        content = []
-
+    ],
+    indirect=True,
+)
+def test_kitbash_model_prepend_name(fake_model_directive):
     expected = []
 
     uniontype_section = nodes.section(ids=["prefix.uniontype_field"])
@@ -401,20 +443,23 @@ def test_kitbash_model_prepend_name():
     typing_union_section += publish_doctree(typing_union_rst).children
     expected.append(typing_union_section)
 
-    actual = KitbashModelDirective.run(DirectiveState)
+    actual = fake_model_directive.run()
 
     assert str(expected) == str(actual)
 
 
-def test_kitbash_model_append_name():
-    class DirectiveState:
-        name = "kitbash-model"
-        arguments = [__module__ + ".MockModel"]
-        options = {
-            "append-name": "suffix",
+@pytest.mark.parametrize(
+    "fake_model_directive",
+    [
+        {
+            "options": {
+                "append-name": "suffix",
+            }
         }
-        content = []
-
+    ],
+    indirect=True,
+)
+def test_kitbash_model_append_name(fake_model_directive):
     expected = []
 
     uniontype_section = nodes.section(ids=["uniontype_field.suffix"])
@@ -461,6 +506,6 @@ def test_kitbash_model_append_name():
     typing_union_section += publish_doctree(typing_union_rst).children
     expected.append(typing_union_section)
 
-    actual = KitbashModelDirective.run(DirectiveState)
+    actual = fake_model_directive.run()
 
     assert str(expected) == str(actual)

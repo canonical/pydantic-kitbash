@@ -43,7 +43,7 @@ class EnumType(enum.Enum):
     VALUE = "value"
 
 
-def validator(cls, value: str) -> str:
+def validator(value: str) -> str:
     return value.strip()
 
 
@@ -111,16 +111,19 @@ This is the key description
 
 # Test for `find_field_data`
 def test_find_field_data():
-    expected = TEST_TYPE.__metadata__[2]
-    actual = find_field_data(TEST_TYPE.__metadata__)
-
-    assert expected == actual
+    metadata = getattr(TEST_TYPE, "__metadata__", None)
+    if metadata is not None:
+        expected = metadata[2]
+        actual = find_field_data(metadata)
+        assert expected == actual
+    else:
+        pytest.fail("No metadata found")
 
 
 # Test for `find_field_data` when none is present
 def test_find_field_data_none():
     expected = None
-    actual = find_field_data(TYPE_NO_FIELD.__metadata__)
+    actual = find_field_data(getattr(TYPE_NO_FIELD, "__metadata__", None))
 
     assert expected == actual
 
@@ -327,7 +330,6 @@ def test_format_type_string():
     type1 = typing.Annotated[str, pydantic.Field(description="test")]
 
     test_list = typing.Literal["val1", "val2", "val3"]
-    type2 = test_list
 
-    assert format_type_string(type1.__origin__) == "str"
-    assert format_type_string(type2) == "Any of: ['val1', 'val2', 'val3']"
+    assert format_type_string(getattr(type1, "__origin__", None)) == "str"
+    assert format_type_string(test_list) == "Any of: ['val1', 'val2', 'val3']"
