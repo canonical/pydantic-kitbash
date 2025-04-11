@@ -121,6 +121,7 @@ def test_find_field_data():
 def test_find_field_data_none():
     expected = None
     actual = find_field_data(TYPE_NO_FIELD.__metadata__)
+
     assert expected == actual
 
 
@@ -138,6 +139,18 @@ def test_is_deprecated():
     assert not is_deprecated(Model, "field2")
     assert is_deprecated(Model, "field3") == "This key is deprecated."
     assert is_deprecated(Model, "union_field") == "Deprecated. pls don't use this :)"
+
+
+# Test for `is_deprecated` when passed an invalid field
+def test_is_deprecated_invalid():
+    class Model(pydantic.BaseModel):
+        field1: TEST_TYPE
+
+    try:
+        is_deprecated(Model, "nope")
+        pytest.fail("Invalid fields should raise a ValueError.")
+    except ValueError:
+        assert True
 
 
 # Test for `is_enum_type`

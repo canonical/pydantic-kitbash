@@ -72,7 +72,7 @@ class KitbashFieldDirective(SphinxDirective):
 
         # exit if provided field name is not present in the model
         if self.arguments[1] not in pydantic_class.__annotations__:
-            raise ValueError(f"Could not find field {self.arguments[1]}")
+            raise ValueError(f"Could not find field: {self.arguments[1]}")
 
         field_name = self.arguments[1]
 
@@ -189,12 +189,12 @@ class KitbashModelDirective(SphinxDirective):
         if not issubclass(pydantic_class, pydantic.BaseModel):
             return []
 
-        class_node = []
+        class_node: list[nodes.Node] = []
 
         # User-provided description overrides model docstring
         if self.content:
             class_node += parse_rst_description("\n".join(self.content))
-        else:
+        elif pydantic_class.__doc__:
             class_node += parse_rst_description(pydantic_class.__doc__)
 
         # Check if user provided a list of deprecated fields to include
@@ -294,7 +294,7 @@ class KitbashModelDirective(SphinxDirective):
         return class_node
 
 
-def find_field_data(metadata: type[object] | None) -> FieldInfo | None:
+def find_field_data(metadata: tuple[FieldInfo] | None) -> FieldInfo | None:
     """Retrieve a field's information from its metadata.
 
     Iterate over an annotated type's metadata and return the first instance
@@ -316,7 +316,7 @@ def find_field_data(metadata: type[object] | None) -> FieldInfo | None:
     return None
 
 
-def is_deprecated(model: type[object], field: str) -> str | None:
+def is_deprecated(model: pydantic.BaseModel, field: str) -> str | None:
     """Retrieve a field's deprecation message if one exists.
 
     Check to see whether the field's deprecated parameter is truthy or falsy.
@@ -331,6 +331,9 @@ def is_deprecated(model: type[object], field: str) -> str | None:
         str: Returns deprecation message if one exists. Else, returns None.
 
     """
+    if field not in model.__annotations__:
+        raise ValueError(f"Could not find field: {field}")
+
     field_params = model.model_fields[field]
     warning = getattr(field_params, "deprecated", None)
 
@@ -343,7 +346,7 @@ def is_deprecated(model: type[object], field: str) -> str | None:
     return warning
 
 
-def is_enum_type(annotation: type) -> bool:
+def is_enum_type(annotation: typing.Any) -> bool:  # noqa: ANN401
     """Check whether a field's type annotation is an enum.
 
     Checks if the provided annotation is an object and if it is a subclass
@@ -555,9 +558,12 @@ def get_annotation_docstring(cls: type[object], annotation_name: str) -> str | N
     for node in ast.walk(tree):
         if found:
             if isinstance(node, ast.Expr):
-                docstring = node.value.value
+                docstring = typing.cast(ast.Constant, node.value).value
             break
-        if isinstance(node, ast.AnnAssign) and node.target.id == annotation_name:
+        if (
+            isinstance(node, ast.AnnAssign)
+            and typing.cast(ast.Name, node.target).id == annotation_name
+        ):
             found = True
 
     return docstring
@@ -582,13 +588,17 @@ def get_enum_member_docstring(cls: type[object], enum_member: str) -> str | None
     tree = ast.parse(textwrap.dedent(source))
 
     for node in tree.body:
+        node = typing.cast(ast.ClassDef, node)
         for i, inner_node in enumerate(node.body):
             if isinstance(inner_node, ast.Assign):
                 for target in inner_node.targets:
                     if isinstance(target, ast.Name) and target.id == enum_member:
                         docstring_node = node.body[i + 1]
-                        if isinstance(node.body[i + 1], ast.Expr):
-                            return docstring_node.value.value
+                        if isinstance(docstring_node, ast.Expr):
+                            docstring_node_value = typing.cast(
+                                ast.Constant, docstring_node.value
+                            )
+                            return str(docstring_node_value.value)
 
     return None
 
@@ -679,8 +689,8 @@ def format_type_string(type_str: type[object]) -> str:
     """
     pattern = r"Literal\[(.*?)\]"
 
-    if re.search(pattern, str(type_str)):
-        string_list = re.search(pattern, str(type_str)).group(1)
+    if match := re.search(pattern, str(type_str)):
+        string_list = match.group(1)
         list_items = re.findall(r"'([^']*)'", string_list)
         return f"Any of: {list_items}"
 

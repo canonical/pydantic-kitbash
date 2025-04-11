@@ -32,7 +32,7 @@ html_context = {
 }
 
 extensions = [
-    "canonical_sphinx",
+
 ]
 # endregion
 

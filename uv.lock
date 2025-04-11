@@ -496,15 +496,6 @@ wheels = [
 ]
 
 [[package]]
-name = "jsonpointer"
-version = "3.0.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/6a/0a/eebeb1fa92507ea94016a2a790b93c2ae41a7e18778f85471dc54475ed25/jsonpointer-3.0.0.tar.gz", hash = "sha256:2b2d729f2091522d61c3b31f82e11870f60b68f43fbc705cb76bf4b832af59ef", size = 9114 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/71/92/5e77f98553e9e75130c78900d000368476aed74276eb8ae8796f65f00918/jsonpointer-3.0.0-py2.py3-none-any.whl", hash = "sha256:13e088adc14fca8b6aa8177c044e12701e6ad4b28ff10e65f2267a90109c9942", size = 7595 },
-]
-
-[[package]]
 name = "linkify-it-py"
 version = "2.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -967,24 +958,19 @@ dependencies = [
 dev = [
     { name = "bs4" },
     { name = "build" },
+    { name = "canonical-sphinx" },
     { name = "coverage", extra = ["toml"] },
-    { name = "docutils" },
     { name = "mypy", extra = ["reports"] },
-    { name = "pydantic" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-mock" },
-    { name = "pyyaml" },
-    { name = "sphinx" },
     { name = "types-colorama" },
     { name = "types-pygments" },
     { name = "types-setuptools" },
 ]
 docs = [
-    { name = "canonical-sphinx" },
     { name = "sphinx-autobuild" },
     { name = "sphinx-lint" },
-    { name = "sphinx-pydantic" },
     { name = "sphinx-toolbox" },
     { name = "sphinxext-rediraffe" },
 ]
@@ -992,39 +978,35 @@ types = [
     { name = "mypy", extra = ["reports"] },
     { name = "types-colorama" },
     { name = "types-pygments" },
+    { name = "types-pyyaml" },
     { name = "types-setuptools" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "docutils", specifier = ">=0.21.2" },
-    { name = "pydantic", specifier = ">=2.10.6" },
+    { name = "pydantic", specifier = "~=2.0" },
     { name = "pyyaml", specifier = ">=6.0.2" },
-    { name = "sphinx", specifier = ">=7.4.7" },
+    { name = "sphinx", specifier = "~=7.0" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "bs4", specifier = ">=0.0.2" },
     { name = "build", specifier = ">=0.7.0" },
+    { name = "canonical-sphinx", specifier = "~=0.4.0" },
     { name = "coverage", extras = ["toml"], specifier = "~=7.4" },
-    { name = "docutils", specifier = ">=0.21.2" },
     { name = "mypy", extras = ["reports"], specifier = "~=1.15.0" },
-    { name = "pydantic", specifier = ">=2.10.6" },
     { name = "pytest", specifier = "~=8.0" },
     { name = "pytest-cov", specifier = "~=6.0" },
     { name = "pytest-mock", specifier = "~=3.12" },
-    { name = "pyyaml", specifier = ">=6.0.2" },
-    { name = "sphinx", specifier = ">=7.4.7" },
     { name = "types-colorama" },
     { name = "types-pygments" },
     { name = "types-setuptools" },
 ]
 docs = [
-    { name = "canonical-sphinx", specifier = "~=0.4.0" },
     { name = "sphinx-autobuild", specifier = "~=2024.2" },
     { name = "sphinx-lint", specifier = "~=1.0" },
-    { name = "sphinx-pydantic", specifier = "==0.1.1" },
     { name = "sphinx-toolbox", specifier = "~=3.5" },
     { name = "sphinxext-rediraffe", specifier = "==0.2.7" },
 ]
@@ -1033,6 +1015,7 @@ types = [
     { name = "mypy", extras = ["reports"], specifier = "~=1.15.0" },
     { name = "types-colorama" },
     { name = "types-pygments" },
+    { name = "types-pyyaml" },
     { name = "types-setuptools" },
 ]
 
@@ -1400,18 +1383,6 @@ wheels = [
 ]
 
 [[package]]
-name = "sphinx-jsonschema"
-version = "1.19.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "docutils" },
-    { name = "jsonpointer" },
-    { name = "pyyaml" },
-    { name = "requests" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/9c/3f/559d054f977596c5535edfeeab1f3a278f3bbb81bada2a1cb3cadbf7bb67/sphinx-jsonschema-1.19.1.tar.gz", hash = "sha256:b2385fe1c7acf2e759152aefed0cb17c920645b2a75c9934000c9c528e7d53c1", size = 18599 }
-
-[[package]]
 name = "sphinx-lint"
 version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1436,19 +1407,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/e7/fb/7a07b8df1ca2418147a6b13e3f6b445071f2565198b45efa631d0d6ef0cd/sphinx_prompt-1.8.0.tar.gz", hash = "sha256:47482f86fcec29662fdfd23e7c04ef03582714195d01f5d565403320084372ed", size = 5121 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/39/49/f890a2668b7cbf375f5528b549c8d36dd2e801b0fbb7b2b5ef65663ecb6c/sphinx_prompt-1.8.0-py3-none-any.whl", hash = "sha256:369ecc633f0711886f9b3a078c83264245be1adf46abeeb9b88b5519e4b51007", size = 7298 },
-]
-
-[[package]]
-name = "sphinx-pydantic"
-version = "0.1.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "pydantic" },
-    { name = "sphinx-jsonschema" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/67/58/e7a518876db551cf3bd6621eecc6675d003b9bd8413382c10298e2113f7e/sphinx-pydantic-0.1.1.tar.gz", hash = "sha256:a830e4f07fe88fbdfe3edecc2f52ef133cde2def7cb882a3f22780f34963b0fb", size = 3394 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/14/87/e397aba1d53aea3bccb8df07e1086e00855404afd92d118b07854d746947/sphinx_pydantic-0.1.1-py3-none-any.whl", hash = "sha256:371487ad81250d8bc5b944a2936b33c10ff88af7188d5be0ee6c4b46bb70254a", size = 2888 },
 ]
 
 [[package]]
@@ -1657,6 +1615,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/3c/d8/9e0ed97a3ca6143c74347bc32a2499809bc83039b115d0138e502679f4e8/types_pygments-2.19.0.20250107.tar.gz", hash = "sha256:94de72c7f09b956c518f566e056812c698272a7a03a9cd81f0065576c6bd3219", size = 18309 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ec/e2/0777eed72b5cec191168b37522fbbe831c8353fe6655c3f29a0454f73498/types_Pygments-2.19.0.20250107-py3-none-any.whl", hash = "sha256:34a555ed327f249daed18c6309e6e62770cdb8b9c321029ba7fd852d10b16f10", size = 25548 },
+]
+
+[[package]]
+name = "types-pyyaml"
+version = "6.0.12.20250402"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2d/68/609eed7402f87c9874af39d35942744e39646d1ea9011765ec87b01b2a3c/types_pyyaml-6.0.12.20250402.tar.gz", hash = "sha256:d7c13c3e6d335b6af4b0122a01ff1d270aba84ab96d1a1a1063ecba3e13ec075", size = 17282 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ed/56/1fe61db05685fbb512c07ea9323f06ea727125951f1eb4dff110b3311da3/types_pyyaml-6.0.12.20250402-py3-none-any.whl", hash = "sha256:652348fa9e7a203d4b0d21066dfb00760d3cbd5a15ebb7cf8d33c88a49546681", size = 20329 },
 ]
 
 [[package]]
