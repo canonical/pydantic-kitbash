@@ -19,7 +19,7 @@ import datetime
 project = "sphinx-craft-docs"
 author = "Canonical"
 
-copyright = "2023-%s, %s" % (datetime.date.today().year, author)
+copyright = "2025-%s, %s" % (datetime.date.today().year, author)
 
 # region Configuration for canonical-sphinx
 ogp_site_url = "https://canonical-sphinx-craft-docs.readthedocs-hosted.com/"
@@ -32,7 +32,7 @@ html_context = {
 }
 
 extensions = [
-    "canonical_sphinx",
+
 ]
 # endregion
 
