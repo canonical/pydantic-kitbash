@@ -35,9 +35,7 @@ import yaml
 from docutils import nodes
 from docutils.core import publish_doctree  # type: ignore[reportUnknownVariableType]
 from pydantic.fields import FieldInfo
-from sphinx.application import Sphinx
 from sphinx.util.docutils import SphinxDirective
-from sphinx.util.typing import ExtensionMetadata
 
 
 class KitbashFieldDirective(SphinxDirective):
@@ -714,24 +712,3 @@ def format_type_string(type_str: type[object] | typing.Any) -> str:  # noqa: ANN
         result = type_str.__name__
 
     return result
-
-
-def setup(app: Sphinx) -> ExtensionMetadata:
-    """Set up the sphinx extension.
-
-    Args:
-      app (Sphinx): Sphinx application
-
-    Returns:
-      ExtensionMetadata: Extension metadata
-
-    """
-    app.add_directive("kitbash-field", KitbashFieldDirective)
-    app.add_directive("kitbash-model", KitbashModelDirective)
-
-    return {
-        "version": "0.1",
-        "env_version": 1,
-        "parallel_read_safe": True,
-        "parallel_write_safe": True,
-    }
