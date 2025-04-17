@@ -13,3 +13,29 @@
 #
 # You should have received a copy of the GNU Lesser General Public License along with
 # this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""Contains the core elements of pydantic-kitbash."""
+
+from sphinx.util.typing import ExtensionMetadata
+from sphinx.application import Sphinx
+from pydantic_kitbash.directives import KitbashFieldDirective, KitbashModelDirective
+
+
+def setup(app: Sphinx) -> ExtensionMetadata:
+    """Set up the sphinx extension.
+
+    Args:
+      app (Sphinx): Sphinx application
+
+    Returns:
+      ExtensionMetadata: Extension metadata
+
+    """
+    app.add_directive("kitbash-field", KitbashFieldDirective)
+    app.add_directive("kitbash-model", KitbashModelDirective)
+
+    return {
+        "env_version": 1,
+        "parallel_read_safe": True,
+        "parallel_write_safe": True,
+    }

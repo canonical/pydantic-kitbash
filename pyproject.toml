@@ -104,7 +104,7 @@ git_describe_command = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["*craft*"]
+include = ["pydantic_kitbash"]
 namespaces = false
 
 [tool.codespell]

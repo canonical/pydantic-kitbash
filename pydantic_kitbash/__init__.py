@@ -15,3 +15,41 @@
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Contains the core elements of pydantic-kitbash."""
+
+from sphinx.util.typing import ExtensionMetadata
+from sphinx.application import Sphinx
+from .directives import KitbashFieldDirective, KitbashModelDirective
+
+try:
+    from ._version import __version__
+except ImportError:  # pragma: no cover
+    from importlib.metadata import version, PackageNotFoundError
+
+    try:
+        __version__ = version("pydantic_kitbash")
+    except PackageNotFoundError:
+        __version__ = "dev"
+
+
+def setup(app: Sphinx) -> ExtensionMetadata:
+    """Set up the sphinx extension.
+
+    Args:
+      app (Sphinx): Sphinx application
+
+    Returns:
+      ExtensionMetadata: Extension metadata
+
+    """
+    app.add_directive("kitbash-field", KitbashFieldDirective)
+    app.add_directive("kitbash-model", KitbashModelDirective)
+
+    return {
+        "version": __version__,
+        "env_version": 1,
+        "parallel_read_safe": True,
+        "parallel_write_safe": True,
+    }
+
+
+__all__ = ["__version__", "setup"]
