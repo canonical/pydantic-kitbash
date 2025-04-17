@@ -26,5 +26,5 @@ author = "Starcraft Engineering"
 html_title = project
 
 extensions = [
-    "pydantic_kitbash.directives",
+    "pydantic_kitbash",
 ]
