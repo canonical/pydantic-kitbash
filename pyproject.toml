@@ -2,7 +2,7 @@
 name = "pydantic-kitbash"
 description = "Sphinx extension for documenting Pydantic models."
 dynamic = ["version", "readme"]
-dependencies = ["docutils", "pydantic~=2.0", "pyyaml", "sphinx~=7.0"]
+dependencies = ["docutils", "pydantic~=2.0", "pyyaml", "sphinx~=8.2"]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Programming Language :: Python :: 3",
