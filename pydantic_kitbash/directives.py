@@ -449,15 +449,11 @@ def build_examples_block(field_name: str, example: str) -> nodes.literal_block:
         nodes.literal_block: A literal block containing a well-formed YAML example.
 
     """
+    example = f"{field_name.rsplit('.', maxsplit=1)[-1]}: {example}"
     try:
         yaml_str = yaml.dump(yaml.safe_load(example), default_flow_style=False)
         yaml_str = yaml_str.rstrip("\n")
         yaml_str = yaml_str.replace("- ", "  - ").removesuffix("...")
-        if len(yaml_str.splitlines()) == 1:
-            yaml_str = f"{field_name.rsplit('.', maxsplit=1)[-1]}: {yaml_str}"
-        else:
-            yaml_str = textwrap.indent(yaml_str, "  ")
-            yaml_str = f"{field_name.rsplit('.', maxsplit=1)[-1]}:\n{yaml_str}"
     except yaml.YAMLError as e:
         warnings.warn(
             f"Invalid YAML for field {field_name}: {e}",

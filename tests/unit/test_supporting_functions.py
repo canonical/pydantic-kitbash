@@ -204,7 +204,7 @@ def test_build_valid_examples_block():
     expected = nodes.literal_block(text=yaml_str)
     expected["language"] = "yaml"
 
-    actual = build_examples_block("test", "subkey: [good, nice]")
+    actual = build_examples_block("test", "{subkey: [good, nice]}")
 
     # comparing strings because docutils `__eq__`
     # method compares by identity rather than state
@@ -214,12 +214,10 @@ def test_build_valid_examples_block():
 # Test for `build_examples_block` with invalid input
 @pytest.mark.filterwarnings("ignore::UserWarning")
 def test_build_invalid_examples_block():
-    yaml_str = "{[ oops"
-
-    expected = nodes.literal_block(text=yaml_str)
+    expected = nodes.literal_block(text="test: {[ oops")
     expected["language"] = "yaml"
 
-    actual = build_examples_block("", yaml_str)
+    actual = build_examples_block("test", "{[ oops")
 
     # comparing strings because docutils `__eq__`
     # method compares by identity rather than state
