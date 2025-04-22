@@ -32,7 +32,6 @@ group in your pyproject.toml file:
 
 ```toml
 [dependency-groups]
-...
 docs = [
     "pydantic-kitbash",
     ...
