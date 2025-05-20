@@ -47,8 +47,7 @@ class KitbashFieldDirective(SphinxDirective):
 
     option_spec = {
         "skip-examples": bool,
-        "skip-type": bool,
-        "override-name": str,
+        "override-type": str,
         "prepend-name": str,
         "append-name": str,
     }
@@ -89,7 +88,7 @@ class KitbashFieldDirective(SphinxDirective):
         enum_values = None
 
         # if field is optional "normal" type (e.g., str | None)
-        if isinstance(field_params.annotation, types.UnionType):
+        if typing.get_origin(field_params.annotation) is types.UnionType:
             union_args = typing.get_args(field_params.annotation)
             field_type: str | None = format_type_string(union_args[0])
             if issubclass(union_args[0], enum.Enum):
@@ -126,12 +125,10 @@ class KitbashFieldDirective(SphinxDirective):
         deprecation_warning = is_deprecated(pydantic_class, field_name)
 
         # Remove type if :skip-type: directive option was used
-        field_type = None if "skip-type" in self.options else field_type
+        field_type = self.options.get("override-type", field_type)
 
         # Remove examples if :skip-examples: directive option was used
         examples = None if "skip-examples" in self.options else examples
-
-        field_alias = self.options.get("override-name", field_alias)
 
         # Get strings to concatenate with `field_alias`
         name_prefix = self.options.get("prepend-name", "")

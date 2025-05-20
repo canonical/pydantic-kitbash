@@ -175,16 +175,13 @@ def test_kitbash_field(fake_field_directive: FakeFieldDirective):
     ("fake_field_directive", "title_text"),
     [
         pytest.param(
-            {"options": {"override-name": "override"}}, "override", id="override-name"
-        ),
-        pytest.param(
             {"options": {"prepend-name": "app"}}, "app.test", id="prepend-name"
         ),
         pytest.param({"options": {"append-name": "app"}}, "test.app", id="append-name"),
     ],
     indirect=["fake_field_directive"],
 )
-def test_kitbash_field_options(
+def test_kitbash_field_name_options(
     fake_field_directive: FakeFieldDirective, title_text: str
 ):
     expected = nodes.section(ids=[title_text])
@@ -216,9 +213,9 @@ def test_kitbash_field_options(
 
 
 @pytest.mark.parametrize(
-    "fake_field_directive", [{"options": {"skip-type": True}}], indirect=True
+    "fake_field_directive", [{"options": {"override-type": "override"}}], indirect=True
 )
-def test_kitbash_field_skip_type(fake_field_directive: FakeFieldDirective):
+def test_kitbash_field_override_type(fake_field_directive: FakeFieldDirective):
     expected = nodes.section(ids=["test"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="test")
@@ -229,6 +226,10 @@ def test_kitbash_field_skip_type(fake_field_directive: FakeFieldDirective):
     .. important::
 
         Deprecated. ew.
+
+    **Type**
+
+    ``override``
 
     **Description**
 
