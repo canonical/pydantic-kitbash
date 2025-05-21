@@ -696,12 +696,13 @@ def format_type_string(type_str: type[object] | typing.Any) -> str:  # noqa: ANN
     """
     result = ""
 
-    pattern = r"Literal\[(.*?)\]"
-    if match := re.search(pattern, str(type_str)):
+    if match := re.search(r"Literal\[(.*?)\]", str(type_str)):
         string_list = match.group(1)
         list_items = re.findall(r"'([^']*)'", string_list)
         result = f"Any of: {list_items}"
     elif type_str is not None:
-        result = type_str.__name__
+        result = str(type_str).replace("project.", "").replace("typing.", "")
+        if type_match := re.match(r"<[^ ]+ '([^']+)'>", str(type_str)):
+            result = type_match.group(1).split(".")[-1]
 
     return result
