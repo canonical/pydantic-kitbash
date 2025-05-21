@@ -47,7 +47,8 @@ class KitbashFieldDirective(SphinxDirective):
 
     option_spec = {
         "skip-examples": bool,
-        "override-type": str,
+        "skip-type": bool,
+        "override-name": str,
         "prepend-name": str,
         "append-name": str,
     }
@@ -88,7 +89,7 @@ class KitbashFieldDirective(SphinxDirective):
         enum_values = None
 
         # if field is optional "normal" type (e.g., str | None)
-        if typing.get_origin(field_params.annotation) is types.UnionType:
+        if isinstance(field_params.annotation, types.UnionType):
             union_args = typing.get_args(field_params.annotation)
             field_type: str | None = format_type_string(union_args[0])
             if issubclass(union_args[0], enum.Enum):
@@ -125,10 +126,12 @@ class KitbashFieldDirective(SphinxDirective):
         deprecation_warning = is_deprecated(pydantic_class, field_name)
 
         # Remove type if :skip-type: directive option was used
-        field_type = self.options.get("override-type", field_type)
+        field_type = None if "skip-type" in self.options else field_type
 
         # Remove examples if :skip-examples: directive option was used
         examples = None if "skip-examples" in self.options else examples
+
+        field_alias = self.options.get("override-name", field_alias)
 
         # Get strings to concatenate with `field_alias`
         name_prefix = self.options.get("prepend-name", "")
@@ -697,13 +700,12 @@ def format_type_string(type_str: type[object] | typing.Any) -> str:  # noqa: ANN
     """
     result = ""
 
-    if match := re.search(r"Literal\[(.*?)\]", str(type_str)):
+    pattern = r"Literal\[(.*?)\]"
+    if match := re.search(pattern, str(type_str)):
         string_list = match.group(1)
         list_items = re.findall(r"'([^']*)'", string_list)
         result = f"Any of: {list_items}"
     elif type_str is not None:
-        result = str(type_str).replace("project.", "").replace("typing.", "")
-        if type_match := re.match(r"<[^ ]+ '([^']+)'>", str(type_str)):
-            result = type_match.group(1).split(".")[-1]
+        result = type_str.__name__
 
     return result
