@@ -159,6 +159,7 @@ class KitbashModelDirective(SphinxDirective):
 
     option_spec = {
         "include-deprecated": str,
+        "skip-description": bool,
         "prepend-name": str,
         "append-name": str,
     }
@@ -189,7 +190,7 @@ class KitbashModelDirective(SphinxDirective):
         # User-provided description overrides model docstring
         if self.content:
             class_node += parse_rst_description("\n".join(self.content))
-        elif pydantic_class.__doc__:
+        elif pydantic_class.__doc__ and "skip-description" not in self.options:
             class_node += parse_rst_description(pydantic_class.__doc__)
 
         # Check if user provided a list of deprecated fields to include
