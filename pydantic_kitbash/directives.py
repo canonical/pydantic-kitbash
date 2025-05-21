@@ -106,7 +106,9 @@ class KitbashFieldDirective(SphinxDirective):
         if typing.get_origin(field_params.annotation) is typing.Union:
             annotated_type = field_params.annotation.__args__[0]
             # weird case: optional literal list fields
-            if typing.get_origin(annotated_type) != typing.Literal:
+            if typing.get_origin(annotated_type) != typing.Literal and hasattr(
+                annotated_type, "__args__"
+            ):
                 field_type = format_type_string(annotated_type.__args__[0])
             metadata = getattr(annotated_type, "__metadata__", None)
             field_annotation = find_field_data(metadata)
@@ -253,7 +255,9 @@ class KitbashModelDirective(SphinxDirective):
                 ):
                     annotated_type = field_params.annotation.__args__[0]
                     # weird case: optional literal list fields
-                    if typing.get_origin(annotated_type) != typing.Literal:
+                    if typing.get_origin(annotated_type) != typing.Literal and hasattr(
+                        annotated_type, "__args__"
+                    ):
                         field_type = format_type_string(annotated_type.__args__[0])
                     metadata = getattr(annotated_type, "__metadata__", None)
                     field_annotation = find_field_data(metadata)
