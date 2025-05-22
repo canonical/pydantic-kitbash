@@ -49,9 +49,9 @@ class KitbashFieldDirective(SphinxDirective):
     option_spec = {
         "skip-examples": directives.flag,
         "skip-type": directives.flag,
-        "override-name": str,
-        "prepend-name": str,
-        "append-name": str,
+        "override-name": directives.unchanged,
+        "prepend-name": directives.unchanged,
+        "append-name": directives.unchanged,
     }
 
     def run(self) -> list[nodes.Node]:
@@ -90,7 +90,7 @@ class KitbashFieldDirective(SphinxDirective):
         enum_values = None
 
         # if field is optional "normal" type (e.g., str | None)
-        if isinstance(field_params.annotation, types.UnionType):
+        if typing.get_origin(field_params.annotation) is types.UnionType:
             union_args = typing.get_args(field_params.annotation)
             field_type: str | None = format_type_string(union_args[0])
             if issubclass(union_args[0], enum.Enum):
@@ -162,10 +162,10 @@ class KitbashModelDirective(SphinxDirective):
     final_argument_whitespace = True
 
     option_spec = {
-        "include-deprecated": str,
+        "include-deprecated": directives.unchanged,
         "skip-description": directives.flag,
-        "prepend-name": str,
-        "append-name": str,
+        "prepend-name": directives.unchanged,
+        "append-name": directives.unchanged,
     }
 
     def run(self) -> list[nodes.Node]:
