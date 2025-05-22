@@ -37,6 +37,12 @@ from docutils.core import publish_doctree  # type: ignore[reportUnknownVariableT
 from pydantic.fields import FieldInfo
 from sphinx.util.docutils import SphinxDirective
 
+# Compiled regex patterns for type formatting
+LITERAL_LIST_EXPR = re.compile(r"Literal\[(.*?)\]")
+LIST_ITEM_EXPR = re.compile(r"'([^']*)'")
+TYPE_STR_EXPR = re.compile(r"<[^ ]+ '([^']+)'>")
+MODULE_PREFIX_EXPR = re.compile(r"\b(?:\w+\.)+(\w+)")
+
 
 class KitbashFieldDirective(SphinxDirective):
     """Define the kitbash-field directive's data and behavior."""
@@ -124,7 +130,7 @@ class KitbashFieldDirective(SphinxDirective):
 
         deprecation_warning = is_deprecated(pydantic_class, field_name)
 
-        # Remove type if :skip-type: directive option was used
+        # Replace type if :override-type: directive option was used
         field_type = self.options.get("override-type", field_type)
 
         # Remove examples if :skip-examples: directive option was used
@@ -696,13 +702,13 @@ def format_type_string(type_str: type[object] | typing.Any) -> str:  # noqa: ANN
     """
     result = ""
 
-    if match := re.search(r"Literal\[(.*?)\]", str(type_str)):
+    if match := re.search(LITERAL_LIST_EXPR, str(type_str)):
         string_list = match.group(1)
-        list_items = re.findall(r"'([^']*)'", string_list)
+        list_items = re.findall(LIST_ITEM_EXPR, string_list)
         result = f"Any of: {list_items}"
     elif type_str is not None:
-        result = str(type_str).replace("project.", "").replace("typing.", "")
-        if type_match := re.match(r"<[^ ]+ '([^']+)'>", str(type_str)):
+        result = re.sub(MODULE_PREFIX_EXPR, r"\1", str(type_str))
+        if type_match := re.match(TYPE_STR_EXPR, str(type_str)):
             result = type_match.group(1).split(".")[-1]
 
     return result
