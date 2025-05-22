@@ -34,6 +34,7 @@ import pydantic
 import yaml
 from docutils import nodes
 from docutils.core import publish_doctree  # type: ignore[reportUnknownVariableType]
+from docutils.parsers.rst import directives
 from pydantic.fields import FieldInfo
 from sphinx.util.docutils import SphinxDirective
 
@@ -46,11 +47,11 @@ class KitbashFieldDirective(SphinxDirective):
     final_argument_whitespace = True
 
     option_spec = {
-        "skip-examples": bool,
-        "skip-type": bool,
-        "override-name": str,
-        "prepend-name": str,
-        "append-name": str,
+        "skip-examples": directives.flag,
+        "skip-type": directives.flag,
+        "override-name": directives.unchanged,
+        "prepend-name": directives.unchanged,
+        "append-name": directives.unchanged,
     }
 
     def run(self) -> list[nodes.Node]:
@@ -89,7 +90,7 @@ class KitbashFieldDirective(SphinxDirective):
         enum_values = None
 
         # if field is optional "normal" type (e.g., str | None)
-        if isinstance(field_params.annotation, types.UnionType):
+        if typing.get_origin(field_params.annotation) is types.UnionType:
             union_args = typing.get_args(field_params.annotation)
             field_type: str | None = format_type_string(union_args[0])
             if issubclass(union_args[0], enum.Enum):
@@ -161,9 +162,10 @@ class KitbashModelDirective(SphinxDirective):
     final_argument_whitespace = True
 
     option_spec = {
-        "include-deprecated": str,
-        "prepend-name": str,
-        "append-name": str,
+        "include-deprecated": directives.unchanged,
+        "skip-description": directives.flag,
+        "prepend-name": directives.unchanged,
+        "append-name": directives.unchanged,
     }
 
     def run(self) -> list[nodes.Node]:
@@ -192,7 +194,7 @@ class KitbashModelDirective(SphinxDirective):
         # User-provided description overrides model docstring
         if self.content:
             class_node += parse_rst_description("\n".join(self.content))
-        elif pydantic_class.__doc__:
+        elif pydantic_class.__doc__ and "skip-description" not in self.options:
             class_node += parse_rst_description(pydantic_class.__doc__)
 
         # Check if user provided a list of deprecated fields to include
