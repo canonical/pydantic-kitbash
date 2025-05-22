@@ -34,6 +34,7 @@ import pydantic
 import yaml
 from docutils import nodes
 from docutils.core import publish_doctree  # type: ignore[reportUnknownVariableType]
+from docutils.parsers.rst import directives
 from pydantic.fields import FieldInfo
 from sphinx.util.docutils import SphinxDirective
 
@@ -46,8 +47,8 @@ class KitbashFieldDirective(SphinxDirective):
     final_argument_whitespace = True
 
     option_spec = {
-        "skip-examples": bool,
-        "skip-type": bool,
+        "skip-examples": directives.flag,
+        "skip-type": directives.flag,
         "override-name": str,
         "prepend-name": str,
         "append-name": str,
@@ -162,7 +163,7 @@ class KitbashModelDirective(SphinxDirective):
 
     option_spec = {
         "include-deprecated": str,
-        "skip-description": bool,
+        "skip-description": directives.flag,
         "prepend-name": str,
         "append-name": str,
     }

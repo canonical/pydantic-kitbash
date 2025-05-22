@@ -262,7 +262,7 @@ def test_kitbash_model(fake_model_directive):
     [
         {
             "options": {
-                "skip-description": True,
+                "skip-description": None,
             }
         }
     ],

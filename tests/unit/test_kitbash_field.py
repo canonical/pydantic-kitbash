@@ -216,7 +216,7 @@ def test_kitbash_field_options(
 
 
 @pytest.mark.parametrize(
-    "fake_field_directive", [{"options": {"skip-type": True}}], indirect=True
+    "fake_field_directive", [{"options": {"skip-type": None}}], indirect=True
 )
 def test_kitbash_field_skip_type(fake_field_directive: FakeFieldDirective):
     expected = nodes.section(ids=["test"])
@@ -245,7 +245,7 @@ def test_kitbash_field_skip_type(fake_field_directive: FakeFieldDirective):
 
 @pytest.mark.parametrize(
     "fake_field_directive",
-    [{"model_field": "bad_example", "options": {"skip-examples": True}}],
+    [{"model_field": "bad_example", "options": {"skip-examples": None}}],
     indirect=True,
 )
 def test_kitbash_field_skip_examples(fake_field_directive: FakeFieldDirective):
@@ -376,7 +376,7 @@ def test_kitbash_field_enum_union(fake_field_directive: FakeFieldDirective):
 
 @pytest.mark.parametrize(
     "fake_field_directive",
-    [{"model_field": "typing_union", "options": {"skip-examples": True}}],
+    [{"model_field": "typing_union", "options": {"skip-examples": None}}],
     indirect=True,
 )
 def test_kitbash_field_typing_union(fake_field_directive: FakeFieldDirective):
