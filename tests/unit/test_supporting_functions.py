@@ -16,7 +16,7 @@
 
 import enum
 import typing
-from typing import Annotated
+from typing import Annotated, TypeVar
 
 import pydantic
 import pytest
@@ -24,14 +24,18 @@ import yaml
 from docutils import nodes
 from docutils.core import publish_doctree
 from pydantic_kitbash.directives import (
+    FieldEntry,
     build_examples_block,
     create_field_node,
     create_table_node,
-    find_field_data,
+    find_fieldinfo,
     format_type_string,
     get_annotation_docstring,
+    get_enum_field_data,
     get_enum_member_docstring,
     get_enum_values,
+    get_optional_annotated_field_data,
+    get_optional_field_data,
     is_deprecated,
     is_enum_type,
     parse_rst_description,
@@ -53,6 +57,15 @@ class MockObject:
 
 def validator(value: str) -> str:
     return value.strip()
+
+
+# Used for testing `get_optional_annotated_field_data` edge case
+T = TypeVar("T")
+
+UniqueList = Annotated[
+    list[T],
+    pydantic.Field(json_schema_extra={"uniqueItems": True}),
+]
 
 
 TEST_TYPE = Annotated[
@@ -118,20 +131,20 @@ This is the key description
 
 
 # Test for `find_field_data`
-def test_find_field_data():
+def test_find_fieldinfo():
     metadata = getattr(TEST_TYPE, "__metadata__", None)
     if metadata is not None:
         expected = metadata[2]
-        actual = find_field_data(metadata)
+        actual = find_fieldinfo(metadata)
         assert expected == actual
     else:
         pytest.fail("No metadata found")
 
 
 # Test for `find_field_data` when none is present
-def test_find_field_data_none():
+def test_find_fieldinfo_none():
     expected = None
-    actual = find_field_data(getattr(TYPE_NO_FIELD, "__metadata__", None))
+    actual = find_fieldinfo(None)
 
     assert expected == actual
 
@@ -189,12 +202,31 @@ def test_create_field_node():
     expected += title_node
     expected += publish_doctree(KEY_ENTRY_RST).children
 
+    test_entry = FieldEntry("key-name")
+    test_entry.alias = "key-name"
+    test_entry.deprecation_warning = "Don't use this."
+    test_entry.field_type = "str"
+    test_entry.description = "This is the key description"
+
     # "Values" and "Examples" are tested separately because while
-    # their HTML output is identical, their docutils are structured
-    # differently from the publich_doctree output
-    actual = create_field_node(
-        "key-name", "Don't use this.", "str", "This is the key description", None, None
-    )
+    # their HTML output is identical, their docutils nodes are structured
+    # differently from the publish_doctree output
+    actual = create_field_node(test_entry)
+
+    assert str(expected) == str(actual)
+
+
+# Test for `create_field_node` with the minimal set of attributes
+def test_create_minimal_field_node():
+    # need to set up section node manually
+    expected = nodes.section(ids=["key-name"])
+    expected["classes"].append("kitbash-entry")
+    title_node = nodes.title(text="key-name")
+    expected += title_node
+
+    test_entry = FieldEntry("key-name")
+
+    actual = create_field_node(test_entry)
 
     assert str(expected) == str(actual)
 
@@ -337,7 +369,43 @@ def test_format_type_string():
     object_type = type(MockObject())
     list_type = typing.Literal["val1", "val2", "val3"]
 
+    assert format_type_string(None) == ""
     assert format_type_string(getattr(annotated_type, "__origin__", None)) == "str"
     assert format_type_string("dict[idk.man.str, typing.Any]") == "dict[str, Any]"
     assert format_type_string(object_type) == "MockObject"
     assert format_type_string(list_type) == "Any of: ['val1', 'val2', 'val3']"
+
+
+# Test for `get_optional_annotated_field_data` when the first
+# arg has no annotation
+def test_get_optional_annotated_field_data_no_annotation():
+    class MockModel(pydantic.BaseModel):
+        field1: str | UniqueList[str] = pydantic.Field(
+            description="desc",
+            examples=["one", "two"],
+        )
+
+    annotation = MockModel.model_fields["field1"].annotation
+
+    entry = FieldEntry("nom")
+    get_optional_annotated_field_data(entry, annotation)
+    print(entry.field_type)
+
+    assert entry.name == "nom"
+    assert entry.field_type is None
+    assert entry.description is None
+    assert entry.examples is None
+
+
+# Test for `get_optional_annotated_field_data` when no annotation
+# is provided
+def test_get_optional_annotated_field_data_none():
+    entry = FieldEntry("nice try")
+    assert get_optional_annotated_field_data(entry, None) is None
+
+
+# Test for `get_optional_annotated_field_data` when no annotation
+# is provided
+def test_get_enum_field_data_none():
+    entry = FieldEntry("nice try")
+    assert get_enum_field_data(entry, None) is None
