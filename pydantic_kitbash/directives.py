@@ -312,7 +312,7 @@ def get_optional_field_data(field_entry: FieldEntry, annotation: type[Any]) -> N
 
 
 def get_optional_annotated_field_data(
-    field_entry: FieldEntry, annotation: type[Any]
+    field_entry: FieldEntry, annotation: type[Any] | None
 ) -> None:
     """Traverse the field and retrieve its type, description, and examples.
 
@@ -325,19 +325,22 @@ def get_optional_annotated_field_data(
         None
 
     """
-    annotated_type = annotation.__args__[0]
-    # weird case: optional literal list fields
-    if get_origin(annotated_type) != Literal and hasattr(annotated_type, "__args__"):
-        field_entry.field_type = format_type_string(annotated_type.__args__[0])
-    metadata = getattr(annotated_type, "__metadata__", None)
-    field_annotation = find_field_data(metadata)
-    if (
-        field_annotation
-        and field_entry.description is None
-        and field_entry.examples is None
-    ):
-        field_entry.description = field_annotation.description
-        field_entry.examples = field_annotation.examples
+    if annotation:
+        annotated_type = annotation.__args__[0]
+        # weird case: optional literal list fields
+        if get_origin(annotated_type) != Literal and hasattr(
+            annotated_type, "__args__"
+        ):
+            field_entry.field_type = format_type_string(annotated_type.__args__[0])
+        metadata = getattr(annotated_type, "__metadata__", None)
+        field_annotation = find_fieldinfo(metadata)
+        if (
+            field_annotation
+            and field_entry.description is None
+            and field_entry.examples is None
+        ):
+            field_entry.description = field_annotation.description
+            field_entry.examples = field_annotation.examples
 
 
 def get_enum_field_data(field_entry: FieldEntry, annotation: type[Any] | None) -> None:
@@ -363,7 +366,7 @@ def get_enum_field_data(field_entry: FieldEntry, annotation: type[Any] | None) -
         field_entry.enum_values = get_enum_values(annotation)
 
 
-def find_field_data(
+def find_fieldinfo(
     metadata: tuple[pydantic.BeforeValidator, pydantic.AfterValidator, FieldInfo]
     | None,
 ) -> FieldInfo | None:
@@ -380,12 +383,16 @@ def find_field_data(
         FieldInfo: The Pydantic field's attribute values (description, examples, etc.)
 
     """
+    result = None
+
     if metadata:
         for element in metadata:
             if isinstance(element, FieldInfo):
-                return element
+                result = element
+    else:
+        result = None
 
-    return None
+    return result
 
 
 def is_deprecated(model: type[pydantic.BaseModel], field: str) -> str | None:
