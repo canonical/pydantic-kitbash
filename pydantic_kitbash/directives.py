@@ -26,9 +26,9 @@ import importlib
 import inspect
 import re
 import textwrap
-import types
-import typing
 import warnings
+from types import UnionType
+from typing import Any, Literal, Union, cast, get_args, get_origin
 
 import pydantic
 import yaml
@@ -36,6 +36,27 @@ from docutils import nodes
 from docutils.core import publish_doctree  # type: ignore[reportUnknownVariableType]
 from pydantic.fields import FieldInfo
 from sphinx.util.docutils import SphinxDirective
+
+
+class FieldEntry:
+    """Contains any field attributes that will be displayed in directive output."""
+
+    name: str
+    alias: str
+    deprecation_warning: str | None
+    field_type: str | None
+    description: str | None
+    enum_values: list[list[str]] | None
+    examples: list[str] | None
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+        self.alias = name
+        self.deprecation_warning = None
+        self.field_type = None
+        self.description = None
+        self.enum_values = None
+        self.examples = None
 
 
 class KitbashFieldDirective(SphinxDirective):
@@ -72,87 +93,69 @@ class KitbashFieldDirective(SphinxDirective):
         if self.arguments[1] not in pydantic_class.__annotations__:
             raise ValueError(f"Could not find field: {self.arguments[1]}")
 
-        field_name = self.arguments[1]
+        field_entry = FieldEntry(self.arguments[1])
 
         # grab pydantic field data
-        field_params = pydantic_class.model_fields[field_name]
+        field_params = pydantic_class.model_fields[field_entry.name]
 
-        field_alias = field_params.alias if field_params.alias else field_name
-
-        description_str = get_annotation_docstring(pydantic_class, field_name)
-        # Use JSON description value if docstring doesn't exist
-        description_str = (
-            field_params.description if description_str is None else description_str
+        field_entry.alias = (
+            field_params.alias if field_params.alias else field_entry.name
         )
 
-        examples = field_params.examples
-        enum_values = None
+        field_entry.description = get_annotation_docstring(
+            pydantic_class, field_entry.name
+        )
+        # Use JSON description value if docstring doesn't exist
+        field_entry.description = (
+            field_params.description
+            if field_entry.description is None
+            else field_entry.description
+        )
+
+        field_entry.examples = field_params.examples
+        field_entry.enum_values = None
 
         # if field is optional "normal" type (e.g., str | None)
-        if isinstance(field_params.annotation, types.UnionType):
-            union_args = typing.get_args(field_params.annotation)
-            field_type: str | None = format_type_string(union_args[0])
-            if issubclass(union_args[0], enum.Enum):
-                description_str = (
-                    union_args[0].__doc__
-                    if description_str is None
-                    else description_str
-                )
-                enum_values = get_enum_values(union_args[0])
+        if get_origin(field_params.annotation) is UnionType:
+            get_optional_field_data(field_entry, field_params.annotation)
         else:
-            field_type = format_type_string(field_params.annotation)
+            field_entry.field_type = format_type_string(field_params.annotation)
 
         # if field is optional annotated type (e.g., VersionStr | None)
-        if typing.get_origin(field_params.annotation) is typing.Union:
-            annotated_type = field_params.annotation.__args__[0]
-            # weird case: optional literal list fields
-            if typing.get_origin(annotated_type) != typing.Literal and hasattr(
-                annotated_type, "__args__"
-            ):
-                field_type = format_type_string(annotated_type.__args__[0])
-            metadata = getattr(annotated_type, "__metadata__", None)
-            field_annotation = find_field_data(metadata)
-            if field_annotation and description_str is None and examples is None:
-                description_str = field_annotation.description
-                examples = field_annotation.examples
-        elif isinstance(field_params.annotation, type):
-            if issubclass(field_params.annotation, enum.Enum):
-                # Use enum class docstring if field has no docstring
-                description_str = (
-                    field_params.annotation.__doc__
-                    if description_str is None
-                    else description_str
-                )
-                enum_values = get_enum_values(field_params.annotation)
+        if get_origin(field_params.annotation) is Union:
+            get_optional_annotated_field_data(field_entry, field_params.annotation)
+        elif is_enum_type(field_params.annotation):
+            get_enum_field_data(field_entry, field_params.annotation)
 
-        deprecation_warning = is_deprecated(pydantic_class, field_name)
+        field_entry.deprecation_warning = is_deprecated(
+            pydantic_class, field_entry.name
+        )
 
         # Remove type if :skip-type: directive option was used
-        field_type = None if "skip-type" in self.options else field_type
+        field_entry.field_type = (
+            None if "skip-type" in self.options else field_entry.field_type
+        )
 
         # Remove examples if :skip-examples: directive option was used
-        examples = None if "skip-examples" in self.options else examples
+        field_entry.examples = (
+            None if "skip-examples" in self.options else field_entry.examples
+        )
 
-        field_alias = self.options.get("override-name", field_alias)
+        field_entry.alias = self.options.get("override-name", field_entry.alias)
 
         # Get strings to concatenate with `field_alias`
         name_prefix = self.options.get("prepend-name", "")
         name_suffix = self.options.get("append-name", "")
 
         # Concatenate option values in the form <prefix>.{field_alias}.<suffix>
-        field_alias = f"{name_prefix}.{field_alias}" if name_prefix else field_alias
-        field_alias = f"{field_alias}.{name_suffix}" if name_suffix else field_alias
+        field_entry.alias = (
+            f"{name_prefix}.{field_entry.alias}" if name_prefix else field_entry.alias
+        )
+        field_entry.alias = (
+            f"{field_entry.alias}.{name_suffix}" if name_suffix else field_entry.alias
+        )
 
-        return [
-            create_field_node(
-                field_alias,
-                deprecation_warning,
-                field_type,
-                description_str,
-                enum_values,
-                examples,
-            )
-        ]
+        return [create_field_node(field_entry)]
 
 
 class KitbashModelDirective(SphinxDirective):
@@ -218,92 +221,141 @@ class KitbashModelDirective(SphinxDirective):
                 # grab pydantic field data (need desc and examples)
                 field_params = pydantic_class.model_fields[field]
 
-                field_alias = field_params.alias if field_params.alias else field
+                field_entry = FieldEntry(field)
+                field_entry.deprecation_warning = deprecation_warning
 
-                description_str = get_annotation_docstring(pydantic_class, field)
-                # Use JSON description value if docstring doesn't exist
-                description_str = (
-                    field_params.description
-                    if description_str is None
-                    else description_str
+                field_entry.alias = (
+                    field_params.alias if field_params.alias else field_entry.name
                 )
 
-                examples = field_params.examples
-                enum_values = None
+                field_entry.description = get_annotation_docstring(
+                    pydantic_class, field_entry.name
+                )
+                # Use JSON description value if docstring doesn't exist
+                field_entry.description = (
+                    field_params.description
+                    if field_entry.description is None
+                    else field_entry.description
+                )
+
+                field_entry.examples = field_params.examples
+                field_entry.enum_values = None
 
                 # if field is optional "normal" type (e.g., str | None)
                 if (
                     field_params.annotation
-                    and typing.get_origin(field_params.annotation) is types.UnionType
+                    and get_origin(field_params.annotation) is UnionType
                 ):
-                    union_args = typing.get_args(field_params.annotation)
-                    field_type = format_type_string(union_args[0])
-                    if issubclass(union_args[0], enum.Enum):
-                        description_str = (
-                            union_args[0].__doc__
-                            if description_str is None
-                            else description_str
-                        )
-                        enum_values = get_enum_values(union_args[0])
+                    get_optional_field_data(field_entry, field_params.annotation)
                 else:
-                    field_type = format_type_string(field_params.annotation)
+                    field_entry.field_type = format_type_string(field_params.annotation)
 
                 # if field is optional annotated type (e.g., `VersionStr | None`)
                 if (
                     field_params.annotation
-                    and typing.get_origin(field_params.annotation) is typing.Union
+                    and get_origin(field_params.annotation) is Union
                 ):
-                    annotated_type = field_params.annotation.__args__[0]
-                    # weird case: optional literal list fields
-                    if typing.get_origin(annotated_type) != typing.Literal and hasattr(
-                        annotated_type, "__args__"
-                    ):
-                        field_type = format_type_string(annotated_type.__args__[0])
-                    metadata = getattr(annotated_type, "__metadata__", None)
-                    field_annotation = find_field_data(metadata)
-                    if (
-                        field_annotation
-                        and description_str is None
-                        and examples is None
-                    ):
-                        description_str = field_annotation.description
-                        examples = field_annotation.examples
+                    get_optional_annotated_field_data(
+                        field_entry, field_params.annotation
+                    )
                 elif is_enum_type(field_params.annotation):
-                    description_str = (
-                        field_params.annotation.__doc__
-                        if description_str is None
-                        else description_str
-                    )
-                    enum_values = (
-                        get_enum_values(field_params.annotation)
-                        if field_params.annotation
-                        else None
-                    )
+                    get_enum_field_data(field_entry, field_params.annotation)
 
                 # Get strings to concatenate with `field_alias`
                 name_prefix = self.options.get("prepend-name", "")
                 name_suffix = self.options.get("append-name", "")
 
                 # Concatenate option values in the form <prefix>.{field_alias}.<suffix>
-                field_alias = (
-                    f"{name_prefix}.{field_alias}" if name_prefix else field_alias
+                field_entry.alias = (
+                    f"{name_prefix}.{field_entry.alias}"
+                    if name_prefix
+                    else field_entry.alias
                 )
-                field_alias = (
-                    f"{field_alias}.{field_alias}" if name_suffix else field_alias
+                field_entry.alias = (
+                    f"{field_entry.alias}.{field_entry.alias}"
+                    if name_suffix
+                    else field_entry.alias
                 )
 
-                class_node.append(
-                    create_field_node(
-                        field_alias,
-                        deprecation_warning,
-                        field_type,
-                        description_str,
-                        enum_values,
-                        examples,
-                    )
-                )
+                class_node.append(create_field_node(field_entry))
 
         return class_node
+
+
+def get_optional_field_data(field_entry: FieldEntry, annotation: type[Any]) -> None:
+    """Traverse the field and retrieve its type, description, and enum values.
+
+    Args:
+        field_entry (FieldEntry): Object containing field data.
+
+        annotation (type[Any]): Type annotation of the optional field. This field
+            may be either a standard Python type or an optional enum.
+
+    Returns:
+        None
+
+    """
+    union_args = get_args(annotation)
+    field_entry.field_type = format_type_string(union_args[0])
+    if issubclass(union_args[0], enum.Enum):
+        field_entry.description = (
+            union_args[0].__doc__
+            if field_entry.description is None
+            else field_entry.description
+        )
+        field_entry.enum_values = get_enum_values(union_args[0])
+
+
+def get_optional_annotated_field_data(
+    field_entry: FieldEntry, annotation: type[Any]
+) -> None:
+    """Traverse the field and retrieve its type, description, and examples.
+
+    Args:
+        field_entry (FieldEntry): Object containing field data.
+
+        annotation (type[Any]): Annotation of an optional annotated type field.
+
+    Returns:
+        None
+
+    """
+    annotated_type = annotation.__args__[0]
+    # weird case: optional literal list fields
+    if get_origin(annotated_type) != Literal and hasattr(annotated_type, "__args__"):
+        field_entry.field_type = format_type_string(annotated_type.__args__[0])
+    metadata = getattr(annotated_type, "__metadata__", None)
+    field_annotation = find_field_data(metadata)
+    if (
+        field_annotation
+        and field_entry.description is None
+        and field_entry.examples is None
+    ):
+        field_entry.description = field_annotation.description
+        field_entry.examples = field_annotation.examples
+
+
+def get_enum_field_data(field_entry: FieldEntry, annotation: type[Any] | None) -> None:
+    """Traverse the enum field and retrieve its docstring and enum values.
+
+    Args:
+        field_entry (FieldEntry): Object containing field data.
+
+        annotation (type[Any]): Annotation for an enum field. This does not include
+            optional enum fields, which are handled by `get_optional_field_data`.
+
+    Returns:
+        None
+
+    """
+    # Use enum class docstring if field has no docstring
+    if annotation:
+        field_entry.description = (
+            annotation.__doc__
+            if field_entry.description is None
+            else field_entry.description
+        )
+        field_entry.enum_values = get_enum_values(annotation)
 
 
 def find_field_data(
@@ -361,7 +413,7 @@ def is_deprecated(model: type[pydantic.BaseModel], field: str) -> str | None:
     return warning
 
 
-def is_enum_type(annotation: typing.Any) -> bool:  # noqa: ANN401
+def is_enum_type(annotation: Any) -> bool:  # noqa: ANN401
     """Check whether a field's type annotation is an enum.
 
     Checks if the provided annotation is an object and if it is a subclass
@@ -377,64 +429,52 @@ def is_enum_type(annotation: typing.Any) -> bool:  # noqa: ANN401
     return isinstance(annotation, type) and issubclass(annotation, enum.Enum)
 
 
-def create_field_node(
-    field_name: str,
-    deprecated_message: str | None,
-    field_type: str | None,
-    field_desc: str | None,
-    field_values: list[list[str]] | None,
-    field_examples: list[str] | None,
-) -> nodes.section:
+def create_field_node(field_entry: FieldEntry) -> nodes.section:
     """Create a section node containing all of the information for a single field.
 
     Args:
-        field_name (str): The name of the field.
-        deprecated_message (str): The field's deprecation warning.
-        field_type (str): The field's type.
-        field_desc (str): The field's description.
-        field_values (list[list[str]]): The field's values (if it is an enum).
-        field_examples (list[str]): The field's JSON examples.
+        field_entry (FieldEntry): Object containing all of the field's data
 
     Returns:
         nodes.section: A section containing well-formed output for each provided field attribute.
 
     """
-    field_node = nodes.section(ids=[field_name])
+    field_node = nodes.section(ids=[field_entry.alias])
     field_node["classes"] = ["kitbash-entry"]
-    title_node = nodes.title(text=field_name)
+    title_node = nodes.title(text=field_entry.alias)
     field_node += title_node
 
-    if deprecated_message:
+    if field_entry.deprecation_warning:
         deprecated_node = nodes.important()
-        deprecated_node += parse_rst_description(deprecated_message)
+        deprecated_node += parse_rst_description(field_entry.deprecation_warning)
         field_node += deprecated_node
 
-    if field_type:
+    if field_entry.field_type:
         type_header = nodes.paragraph()
         type_header += nodes.strong(text="Type")
         type_value = nodes.paragraph()
-        type_value += nodes.literal(text=field_type)
+        type_value += nodes.literal(text=field_entry.field_type)
         field_node += type_header
         field_node += type_value
 
-    if field_desc:
+    if field_entry.description:
         desc_header = nodes.paragraph()
         desc_header += nodes.strong(text="Description")
         field_node += desc_header
-        field_node += parse_rst_description(field_desc)
+        field_node += parse_rst_description(field_entry.description)
 
-    if field_values:
+    if field_entry.enum_values:
         values_header = nodes.paragraph()
         values_header += nodes.strong(text="Values")
         field_node += values_header
-        field_node += create_table_node(field_values)
+        field_node += create_table_node(field_entry.enum_values)
 
-    if field_examples:
+    if field_entry.examples:
         examples_header = nodes.paragraph()
         examples_header += nodes.strong(text="Examples")
         field_node += examples_header
-        for example in field_examples:
-            field_node += build_examples_block(field_name, example)
+        for example in field_entry.examples:
+            field_node += build_examples_block(field_entry.alias, example)
 
     return field_node
 
@@ -569,11 +609,11 @@ def get_annotation_docstring(cls: type[object], annotation_name: str) -> str | N
     for node in ast.walk(tree):
         if found:
             if isinstance(node, ast.Expr):
-                docstring = typing.cast(ast.Constant, node.value).value
+                docstring = cast(ast.Constant, node.value).value
             break
         if (
             isinstance(node, ast.AnnAssign)
-            and typing.cast(ast.Name, node.target).id == annotation_name
+            and cast(ast.Name, node.target).id == annotation_name
         ):
             found = True
 
@@ -599,14 +639,14 @@ def get_enum_member_docstring(cls: type[object], enum_member: str) -> str | None
     tree = ast.parse(textwrap.dedent(source))
 
     for node in tree.body:
-        node = typing.cast(ast.ClassDef, node)
+        node = cast(ast.ClassDef, node)
         for i, inner_node in enumerate(node.body):
             if isinstance(inner_node, ast.Assign):
                 for target in inner_node.targets:
                     if isinstance(target, ast.Name) and target.id == enum_member:
                         docstring_node = node.body[i + 1]
                         if isinstance(docstring_node, ast.Expr):
-                            docstring_node_value = typing.cast(
+                            docstring_node_value = cast(
                                 ast.Constant, docstring_node.value
                             )
                             return str(docstring_node_value.value)
@@ -651,7 +691,7 @@ def parse_rst_description(rst_desc: str) -> list[nodes.Node]:
         list[Node]: the docutils nodes produced by the rST
 
     """
-    rst_doc = typing.cast(nodes.document, publish_doctree(strip_whitespace(rst_desc)))
+    rst_doc = cast(nodes.document, publish_doctree(strip_whitespace(rst_desc)))
 
     return list(rst_doc.children)
 
@@ -685,7 +725,7 @@ def strip_whitespace(rst_desc: str | None) -> str:
     return ""
 
 
-def format_type_string(type_str: type[object] | typing.Any) -> str:  # noqa: ANN401
+def format_type_string(type_str: type[object] | Any) -> str:  # noqa: ANN401
     """Format a python type string.
 
     Accepts a type string and converts it it to a more user-friendly

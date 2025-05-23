@@ -24,6 +24,7 @@ import yaml
 from docutils import nodes
 from docutils.core import publish_doctree
 from pydantic_kitbash.directives import (
+    FieldEntry,
     build_examples_block,
     create_field_node,
     create_table_node,
@@ -181,12 +182,16 @@ def test_create_field_node():
     expected += title_node
     expected += publish_doctree(KEY_ENTRY_RST).children
 
+    test_entry = FieldEntry("key-name")
+    test_entry.alias = "key-name"
+    test_entry.deprecation_warning = "Don't use this."
+    test_entry.field_type = "str"
+    test_entry.description = "This is the key description"
+
     # "Values" and "Examples" are tested separately because while
-    # their HTML output is identical, their docutils are structured
-    # differently from the publich_doctree output
-    actual = create_field_node(
-        "key-name", "Don't use this.", "str", "This is the key description", None, None
-    )
+    # their HTML output is identical, their docutils nodes are structured
+    # differently from the publish_doctree output
+    actual = create_field_node(test_entry)
 
     assert str(expected) == str(actual)
 
