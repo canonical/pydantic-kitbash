@@ -138,7 +138,9 @@ class KitbashFieldDirective(SphinxDirective):
         )
 
         # Replace type if :override-type: directive option was used
-        field_type = self.options.get("override-type", field_type)
+        field_entry.field_type = self.options.get(
+            "override-type", field_entry.field_type
+        )
 
         # Remove examples if :skip-examples: directive option was used
         field_entry.examples = (
