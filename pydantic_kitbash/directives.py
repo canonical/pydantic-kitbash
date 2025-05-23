@@ -34,8 +34,15 @@ import pydantic
 import yaml
 from docutils import nodes
 from docutils.core import publish_doctree  # type: ignore[reportUnknownVariableType]
+from docutils.parsers.rst import directives
 from pydantic.fields import FieldInfo
 from sphinx.util.docutils import SphinxDirective
+
+# Compiled regex patterns for type formatting
+LITERAL_LIST_EXPR = re.compile(r"Literal\[(.*?)\]")
+LIST_ITEM_EXPR = re.compile(r"'([^']*)'")
+TYPE_STR_EXPR = re.compile(r"<[^ ]+ '([^']+)'>")
+MODULE_PREFIX_EXPR = re.compile(r"\b(?:\w+\.)+(\w+)")
 
 
 class FieldEntry:
@@ -67,11 +74,10 @@ class KitbashFieldDirective(SphinxDirective):
     final_argument_whitespace = True
 
     option_spec = {
-        "skip-examples": bool,
-        "skip-type": bool,
-        "override-name": str,
-        "prepend-name": str,
-        "append-name": str,
+        "skip-examples": directives.flag,
+        "override-type": directives.unchanged,
+        "prepend-name": directives.unchanged,
+        "append-name": directives.unchanged,
     }
 
     def run(self) -> list[nodes.Node]:
@@ -131,17 +137,13 @@ class KitbashFieldDirective(SphinxDirective):
             pydantic_class, field_entry.name
         )
 
-        # Remove type if :skip-type: directive option was used
-        field_entry.field_type = (
-            None if "skip-type" in self.options else field_entry.field_type
-        )
+        # Replace type if :override-type: directive option was used
+        field_type = self.options.get("override-type", field_type)
 
         # Remove examples if :skip-examples: directive option was used
         field_entry.examples = (
             None if "skip-examples" in self.options else field_entry.examples
         )
-
-        field_entry.alias = self.options.get("override-name", field_entry.alias)
 
         # Get strings to concatenate with `field_alias`
         name_prefix = self.options.get("prepend-name", "")
@@ -166,9 +168,10 @@ class KitbashModelDirective(SphinxDirective):
     final_argument_whitespace = True
 
     option_spec = {
-        "include-deprecated": str,
-        "prepend-name": str,
-        "append-name": str,
+        "include-deprecated": directives.unchanged,
+        "skip-description": directives.flag,
+        "prepend-name": directives.unchanged,
+        "append-name": directives.unchanged,
     }
 
     def run(self) -> list[nodes.Node]:
@@ -197,7 +200,7 @@ class KitbashModelDirective(SphinxDirective):
         # User-provided description overrides model docstring
         if self.content:
             class_node += parse_rst_description("\n".join(self.content))
-        elif pydantic_class.__doc__:
+        elif pydantic_class.__doc__ and "skip-description" not in self.options:
             class_node += parse_rst_description(pydantic_class.__doc__)
 
         # Check if user provided a list of deprecated fields to include
@@ -743,12 +746,13 @@ def format_type_string(type_str: type[object] | Any) -> str:  # noqa: ANN401
     """
     result = ""
 
-    pattern = r"Literal\[(.*?)\]"
-    if match := re.search(pattern, str(type_str)):
+    if match := re.search(LITERAL_LIST_EXPR, str(type_str)):
         string_list = match.group(1)
-        list_items = re.findall(r"'([^']*)'", string_list)
+        list_items = re.findall(LIST_ITEM_EXPR, string_list)
         result = f"Any of: {list_items}"
     elif type_str is not None:
-        result = type_str.__name__
+        result = re.sub(MODULE_PREFIX_EXPR, r"\1", str(type_str))
+        if type_match := re.match(TYPE_STR_EXPR, str(type_str)):
+            result = type_match.group(1).split(".")[-1]
 
     return result
