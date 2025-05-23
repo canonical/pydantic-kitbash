@@ -43,6 +43,14 @@ class EnumType(enum.Enum):
     VALUE = "value"
 
 
+class MockObject:
+    # contents don't matter, this is just for testing type formatting
+    the_real_treasure: str
+
+    def __init__(self):
+        self.the_real_treasure = "the friends we made along the way"
+
+
 def validator(value: str) -> str:
     return value.strip()
 
@@ -325,9 +333,11 @@ def test_strip_whitespace():
 
 # Test for `format_type_string`
 def test_format_type_string():
-    type1 = typing.Annotated[str, pydantic.Field(description="test")]
+    annotated_type = typing.Annotated[str, pydantic.Field(description="test")]
+    object_type = type(MockObject())
+    list_type = typing.Literal["val1", "val2", "val3"]
 
-    test_list = typing.Literal["val1", "val2", "val3"]
-
-    assert format_type_string(getattr(type1, "__origin__", None)) == "str"
-    assert format_type_string(test_list) == "Any of: ['val1', 'val2', 'val3']"
+    assert format_type_string(getattr(annotated_type, "__origin__", None)) == "str"
+    assert format_type_string("dict[idk.man.str, typing.Any]") == "dict[str, Any]"
+    assert format_type_string(object_type) == "MockObject"
+    assert format_type_string(list_type) == "Any of: ['val1', 'val2', 'val3']"
