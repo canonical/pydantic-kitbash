@@ -32,7 +32,7 @@ LIST_TABLE_RST = """
 .. list-table::
     :header-rows: 1
 
-    * - Values
+    * - Value
       - Description
     * - ``value1``
       - The first value.

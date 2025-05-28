@@ -35,7 +35,6 @@ from pydantic_kitbash.directives import (
     get_enum_member_docstring,
     get_enum_values,
     get_optional_annotated_field_data,
-    get_optional_field_data,
     is_deprecated,
     is_enum_type,
     parse_rst_description,
@@ -104,7 +103,7 @@ TABLE_RST = """\
 .. list-table::
     :header-rows: 1
 
-    * - Values
+    * - Value
       - Description
     * - ``1.1``
       - 1.2

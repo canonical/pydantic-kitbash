@@ -550,7 +550,7 @@ def create_table_node(values: list[list[str]]) -> nodes.container:
     header_row = nodes.row()
 
     values_entry = nodes.entry()
-    values_entry += nodes.paragraph(text="Values")
+    values_entry += nodes.paragraph(text="Value")
     header_row += values_entry
 
     desc_entry = nodes.entry()
