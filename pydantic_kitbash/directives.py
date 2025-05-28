@@ -45,6 +45,14 @@ TYPE_STR_EXPR = re.compile(r"<[^ ]+ '([^']+)'>")
 MODULE_PREFIX_EXPR = re.compile(r"\b(?:\w+\.)+(\w+)")
 
 
+class PrettyListDumper(yaml.Dumper):
+    """Custom YAML dumper for indenting lists."""
+
+    def increase_indent(self, flow: bool = False, indentless: bool = False) -> None:  # noqa: ARG002, FBT001, FBT002
+        """Override the default increase_indent method from Emitter."""
+        return super().increase_indent(flow, False)  # noqa: FBT003
+
+
 class FieldEntry:
     """Contains any field attributes that will be displayed in directive output."""
 
@@ -507,9 +515,14 @@ def build_examples_block(field_name: str, example: str) -> nodes.literal_block:
     """
     example = f"{field_name.rsplit('.', maxsplit=1)[-1]}: {example}"
     try:
-        yaml_str = yaml.dump(yaml.safe_load(example), default_flow_style=False)
+        yaml_str = yaml.dump(
+            yaml.safe_load(example),
+            Dumper=PrettyListDumper,
+            default_flow_style=False,
+            sort_keys=False,
+        )
         yaml_str = yaml_str.rstrip("\n")
-        yaml_str = yaml_str.replace("- ", "  - ").removesuffix("...")
+        yaml_str = yaml_str.removesuffix("...")
     except yaml.YAMLError as e:
         warnings.warn(
             f"Invalid YAML for field {field_name}: {e}",
