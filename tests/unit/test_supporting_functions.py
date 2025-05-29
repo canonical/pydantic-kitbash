@@ -129,6 +129,23 @@ This is the key description
 """
 
 
+LITERAL_LIST_ENTRY_RST = """\
+
+.. important::
+
+    Don't use this.
+
+**Type**
+
+Any of: ``['one', 'two', 'three']``
+
+**Description**
+
+This is the key description
+
+"""
+
+
 # Test for `find_field_data`
 def test_find_fieldinfo():
     metadata = getattr(TEST_TYPE, "__metadata__", None)
@@ -213,6 +230,22 @@ def test_create_field_node():
     actual = create_field_node(test_entry)
 
     assert str(expected) == str(actual)
+
+
+# Test for `create_field_node` with a FieldEntry of type Literal[]
+def test_create_field_node_literal_list():
+    # need to set up section node manually
+    expected = nodes.section(ids=["key-name"])
+    expected["classes"].append("kitbash-entry")
+    title_node = nodes.title(text="key-name")
+    expected += title_node
+    expected += publish_doctree(LITERAL_LIST_ENTRY_RST).children
+
+    test_entry = FieldEntry("key-name")
+    test_entry.alias = "key-name"
+    test_entry.deprecation_warning = "Don't use this."
+    test_entry.field_type = "Literal['one', 'two', 'three']"
+    test_entry.description = "This is the key description"
 
 
 # Test for `create_field_node` with the minimal set of attributes
@@ -372,7 +405,7 @@ def test_format_type_string():
     assert format_type_string(getattr(annotated_type, "__origin__", None)) == "str"
     assert format_type_string("dict[idk.man.str, typing.Any]") == "dict[str, Any]"
     assert format_type_string(object_type) == "MockObject"
-    assert format_type_string(list_type) == "Any of: ['val1', 'val2', 'val3']"
+    assert format_type_string(list_type) == "Literal['val1', 'val2', 'val3']"
 
 
 # Test for `get_optional_annotated_field_data` when the first
