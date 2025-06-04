@@ -14,11 +14,13 @@
 # You should have received a copy of the GNU Lesser General Public License along with
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Literal
+
 import pydantic
 
 
 class MockModel(pydantic.BaseModel):
-    mock_field: str = pydantic.Field(
+    mock_field: Literal["val1", "val2"] = pydantic.Field(
         description="description",
         examples=["val1", "val2"],
         alias="test",

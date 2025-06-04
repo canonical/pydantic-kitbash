@@ -470,7 +470,7 @@ def create_field_node(field_entry: FieldEntry) -> nodes.section:
         if match := re.search(LITERAL_LIST_EXPR, str(field_entry.field_type)):
             list_str = match.group(1)
             list_items = str(re.findall(LIST_ITEM_EXPR, list_str))
-            type_value += nodes.Text("Any of: ")
+            type_value += nodes.Text("One of: ")
             type_value += nodes.literal(text=list_items)
         else:
             type_value += nodes.literal(text=field_entry.field_type)
