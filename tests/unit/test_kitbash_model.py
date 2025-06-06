@@ -202,10 +202,14 @@ def fake_model_directive(request: pytest.FixtureRequest) -> FakeModelDirective:
     "fake_model_directive", [{"model": ".OopsNoModel"}], indirect=True
 )
 def test_kitbash_model_invalid(fake_model_directive):
+    """Test for KitbashModelDirective when passed a nonexistent model."""
+
     assert fake_model_directive.run() == []
 
 
 def test_kitbash_model(fake_model_directive):
+    """Test for the KitbashModelDirective."""
+
     expected = list(publish_doctree(MockModel.__doc__).children)
 
     uniontype_section = nodes.section(ids=["uniontype_field"])
@@ -269,6 +273,8 @@ def test_kitbash_model(fake_model_directive):
     indirect=True,
 )
 def test_kitbash_model_skip_description(fake_model_directive):
+    """Tests the skip-description option in KitbashModelDirective."""
+
     expected = []
 
     uniontype_section = nodes.section(ids=["uniontype_field"])
@@ -324,6 +330,8 @@ def test_kitbash_model_skip_description(fake_model_directive):
     "fake_model_directive", [{"content": ["``Test content``"]}], indirect=True
 )
 def test_kitbash_model_content(fake_model_directive):
+    """Tests the KitbashModelDirective when content is provided in the body."""
+
     expected = list(publish_doctree("``Test content``").children)
 
     uniontype_section = nodes.section(ids=["uniontype_field"])
@@ -387,6 +395,8 @@ def test_kitbash_model_content(fake_model_directive):
     indirect=True,
 )
 def test_kitbash_model_include_deprecated(fake_model_directive):
+    """Tests the include-deprecated option in KitbashModelDirective."""
+
     expected = list(publish_doctree("this is the model's docstring").children)
 
     mock_field_section = nodes.section(ids=["test"])
@@ -453,89 +463,29 @@ def test_kitbash_model_include_deprecated(fake_model_directive):
         {
             "options": {
                 "prepend-name": "prefix",
-            }
-        }
-    ],
-    indirect=True,
-)
-def test_kitbash_model_prepend_name(fake_model_directive):
-    expected = list(publish_doctree("this is the model's docstring").children)
-
-    uniontype_section = nodes.section(ids=["prefix.uniontype_field"])
-    uniontype_section["classes"].append("kitbash-entry")
-    uniontype_title = nodes.title(text="prefix.uniontype_field")
-    uniontype_section += uniontype_title
-
-    uniontype_rst = strip_whitespace(UNIONTYPE_RST)
-    uniontype_section += publish_doctree(uniontype_rst).children
-    expected.append(uniontype_section)
-
-    enum_section = nodes.section(ids=["prefix.enum_field"])
-    enum_section["classes"].append("kitbash-entry")
-    enum_title = nodes.title(text="prefix.enum_field")
-    enum_section += enum_title
-
-    enum_rst = strip_whitespace(ENUM_RST)
-    enum_section += publish_doctree(enum_rst).children
-
-    enum_value_container = nodes.container()
-    enum_value_container += publish_doctree(LIST_TABLE_RST).children
-    enum_section += enum_value_container
-    expected.append(enum_section)
-
-    enum_uniontype_section = nodes.section(ids=["prefix.enum_uniontype"])
-    enum_uniontype_section["classes"].append("kitbash-entry")
-    enum_uniontype_title = nodes.title(text="prefix.enum_uniontype")
-    enum_uniontype_section += enum_uniontype_title
-
-    enum_uniontype_rst = strip_whitespace(ENUM_RST)
-    enum_uniontype_section += publish_doctree(enum_uniontype_rst).children
-
-    enum_uniontype_value_container = nodes.container()
-    enum_uniontype_value_container += publish_doctree(LIST_TABLE_RST).children
-    enum_uniontype_section += enum_uniontype_value_container
-    expected.append(enum_uniontype_section)
-
-    typing_union_section = nodes.section(ids=["prefix.typing_union"])
-    typing_union_section["classes"].append("kitbash-entry")
-    typing_union_title = nodes.title(text="prefix.typing_union")
-    typing_union_section += typing_union_title
-
-    typing_union_rst = strip_whitespace(TYPING_UNION_RST)
-    typing_union_section += publish_doctree(typing_union_rst).children
-    expected.append(typing_union_section)
-
-    actual = fake_model_directive.run()
-
-    assert str(expected) == str(actual)
-
-
-@pytest.mark.parametrize(
-    "fake_model_directive",
-    [
-        {
-            "options": {
                 "append-name": "suffix",
             }
         }
     ],
     indirect=True,
 )
-def test_kitbash_model_append_name(fake_model_directive):
+def test_kitbash_model_name_options(fake_model_directive):
+    """Tests the -name options in KitbashModelDirective."""
+
     expected = list(publish_doctree("this is the model's docstring").children)
 
-    uniontype_section = nodes.section(ids=["uniontype_field.suffix"])
+    uniontype_section = nodes.section(ids=["prefix.uniontype_field.suffix"])
     uniontype_section["classes"].append("kitbash-entry")
-    uniontype_title = nodes.title(text="uniontype_field.suffix")
+    uniontype_title = nodes.title(text="prefix.uniontype_field.suffix")
     uniontype_section += uniontype_title
 
     uniontype_rst = strip_whitespace(UNIONTYPE_RST)
     uniontype_section += publish_doctree(uniontype_rst).children
     expected.append(uniontype_section)
 
-    enum_section = nodes.section(ids=["enum_field.suffix"])
+    enum_section = nodes.section(ids=["prefix.enum_field.suffix"])
     enum_section["classes"].append("kitbash-entry")
-    enum_title = nodes.title(text="enum_field.suffix")
+    enum_title = nodes.title(text="prefix.enum_field.suffix")
     enum_section += enum_title
 
     enum_rst = strip_whitespace(ENUM_RST)
@@ -546,9 +496,9 @@ def test_kitbash_model_append_name(fake_model_directive):
     enum_section += enum_value_container
     expected.append(enum_section)
 
-    enum_uniontype_section = nodes.section(ids=["enum_uniontype.suffix"])
+    enum_uniontype_section = nodes.section(ids=["prefix.enum_uniontype.suffix"])
     enum_uniontype_section["classes"].append("kitbash-entry")
-    enum_uniontype_title = nodes.title(text="enum_uniontype.suffix")
+    enum_uniontype_title = nodes.title(text="prefix.enum_uniontype.suffix")
     enum_uniontype_section += enum_uniontype_title
 
     enum_uniontype_rst = strip_whitespace(ENUM_RST)
@@ -559,9 +509,9 @@ def test_kitbash_model_append_name(fake_model_directive):
     enum_uniontype_section += enum_uniontype_value_container
     expected.append(enum_uniontype_section)
 
-    typing_union_section = nodes.section(ids=["typing_union.suffix"])
+    typing_union_section = nodes.section(ids=["prefix.typing_union.suffix"])
     typing_union_section["classes"].append("kitbash-entry")
-    typing_union_title = nodes.title(text="typing_union.suffix")
+    typing_union_title = nodes.title(text="prefix.typing_union.suffix")
     typing_union_section += typing_union_title
 
     typing_union_rst = strip_whitespace(TYPING_UNION_RST)

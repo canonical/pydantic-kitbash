@@ -135,8 +135,26 @@ key:
 """
 
 
-# Test for `find_field_data`
+LITERAL_LIST_ENTRY_RST = """\
+
+.. important::
+
+    Don't use this.
+
+**Type**
+
+One of: ``['one', 'two', 'three']``
+
+**Description**
+
+This is the key description
+
+"""
+
+
 def test_find_fieldinfo():
+    """Test for find_fieldinfo with valid input."""
+
     metadata = getattr(TEST_TYPE, "__metadata__", None)
     if metadata is not None:
         expected = metadata[2]
@@ -146,16 +164,17 @@ def test_find_fieldinfo():
         pytest.fail("No metadata found")
 
 
-# Test for `find_field_data` when none is present
 def test_find_fieldinfo_none():
+    """Test for find_fieldinfo() when no FieldInfo object is present."""
     expected = None
     actual = find_fieldinfo(None)
 
     assert expected == actual
 
 
-# Test for `is_deprecated`
 def test_is_deprecated():
+    """Test for is_deprecated()"""
+
     class Model(pydantic.BaseModel):
         field1: TEST_TYPE
         field2: str = pydantic.Field(deprecated=False)
@@ -170,8 +189,9 @@ def test_is_deprecated():
     assert is_deprecated(Model, "union_field") == "Deprecated. pls don't use this :)"
 
 
-# Test for `is_deprecated` when passed an invalid field
 def test_is_deprecated_invalid():
+    """Test for is_deprecated when passed a nonexistent field."""
+
     class Model(pydantic.BaseModel):
         field1: TEST_TYPE
 
@@ -182,24 +202,27 @@ def test_is_deprecated_invalid():
         assert True
 
 
-# Test for `is_enum_type`
 def test_is_enum_type():
+    """Test for is_enum_type when passed an enum."""
+
     class Model(pydantic.BaseModel):
         field: EnumType
 
     assert is_enum_type(Model.model_fields["field"].annotation)
 
 
-# Test for `is_enum_type` when false
 def test_is_enum_type_false():
+    """Test for is_enum_type when passed a non-enum field."""
+
     class Model(pydantic.BaseModel):
         field: int
 
     assert not is_enum_type(Model.model_fields["field"].annotation)
 
 
-# Test for `create_field_node`
 def test_create_field_node():
+    """Test for create_field_node."""
+
     # need to set up section node manually
     expected = nodes.section(ids=["key-name"])
     expected["classes"].append("kitbash-entry")
@@ -221,8 +244,29 @@ def test_create_field_node():
     assert str(expected) == str(actual)
 
 
-# Test for `create_field_node` with the minimal set of attributes
+def test_create_field_node_literal_list():
+    """Test for create_field_node with a FieldEntry of type Literal[]."""
+
+    # need to set up section node manually
+    expected = nodes.section(ids=["key-name"])
+    expected["classes"].append("kitbash-entry")
+    title_node = nodes.title(text="key-name")
+    expected += title_node
+    expected += publish_doctree(LITERAL_LIST_ENTRY_RST).children
+
+    test_entry = FieldEntry("key-name")
+    test_entry.alias = "key-name"
+    test_entry.deprecation_warning = "Don't use this."
+    test_entry.field_type = "Literal['one', 'two', 'three']"
+    test_entry.description = "This is the key description"
+    actual = create_field_node(test_entry)
+
+    assert str(expected) == str(actual)
+
+
 def test_create_minimal_field_node():
+    """Test for create_field_node with a minimal set of attributes."""
+
     # need to set up section node manually
     expected = nodes.section(ids=["key-name"])
     expected["classes"].append("kitbash-entry")
@@ -236,8 +280,9 @@ def test_create_minimal_field_node():
     assert str(expected) == str(actual)
 
 
-# Test for `build_examples_block` with valid input
 def test_build_valid_examples_block():
+    """Test for build_examples_block with valid input."""
+
     # Not using publish_doctree because the nodes differ, despite the HTML
     # of the rendered output being identical. This test could be improved
     # by using publish_doctree and the Sphinx HTML writer, which I couldn't
@@ -266,9 +311,10 @@ def test_build_list_example():
     assert str(expected) == str(actual)
 
 
-# Test for `build_examples_block` with invalid input
 @pytest.mark.filterwarnings("ignore::UserWarning")
 def test_build_invalid_examples_block():
+    """Test for build_examples_block with invalid input."""
+
     expected = nodes.literal_block(text="test: {[ oops")
     expected["language"] = "yaml"
 
@@ -279,8 +325,9 @@ def test_build_invalid_examples_block():
     assert str(expected) == str(actual)
 
 
-# Test for `create_table_node`
 def test_create_table_node():
+    """Test for create_table_node."""
+
     expected = nodes.container()
     expected += publish_doctree(TABLE_RST).children
 
@@ -291,8 +338,9 @@ def test_create_table_node():
     assert str(expected) == str(actual)
 
 
-# Test for `get_annotation_docstring`
 def test_get_annotation_docstring():
+    """Test for get_annotation_docstring."""
+
     class MockModel(pydantic.BaseModel):
         field1: int
 
@@ -305,8 +353,9 @@ def test_get_annotation_docstring():
     assert get_annotation_docstring(MockModel, "field2") == "The second field."
 
 
-# Test for `get_enum_member_docstring`
 def test_get_enum_member_docstring():
+    """Test for get_enum_member_docstring."""
+
     class MockEnum(enum.Enum):
         VAL1 = "one"
 
@@ -319,8 +368,9 @@ def test_get_enum_member_docstring():
     assert get_enum_member_docstring(MockEnum, "VAL2") == "This is the second value."
 
 
-# Test for `get_enum_values`
 def test_get_enum_values():
+    """Test for get_enum_values."""
+
     class MockEnum(enum.Enum):
         VAL1 = "one"
         """Docstring 1."""
@@ -334,8 +384,9 @@ def test_get_enum_values():
     ]
 
 
-# Test for `parse_rst_description`
 def test_parse_rst_description():
+    """Test parse_rst_description."""
+
     # use docutils to build rST like Sphinx would
     expected = publish_doctree(RST_SAMPLE).children
     # function output
@@ -346,8 +397,9 @@ def test_parse_rst_description():
     assert str(expected) == str(actual)
 
 
-# Test for `strip_whitespace`
 def test_strip_whitespace():
+    """Test for strip_whitespace."""
+
     docstring1 = """Description.
 
       **Examples**
@@ -378,8 +430,9 @@ def test_strip_whitespace():
     assert strip_whitespace(None) == ""
 
 
-# Test for `format_type_string`
 def test_format_type_string():
+    """Test for format_type_string."""
+
     annotated_type = typing.Annotated[str, pydantic.Field(description="test")]
     object_type = type(MockObject())
     list_type = typing.Literal["val1", "val2", "val3"]
@@ -388,12 +441,15 @@ def test_format_type_string():
     assert format_type_string(getattr(annotated_type, "__origin__", None)) == "str"
     assert format_type_string("dict[idk.man.str, typing.Any]") == "dict[str, Any]"
     assert format_type_string(object_type) == "MockObject"
-    assert format_type_string(list_type) == "Any of: ['val1', 'val2', 'val3']"
+    assert format_type_string(list_type) == "Literal['val1', 'val2', 'val3']"
 
 
-# Test for `get_optional_annotated_field_data` when the first
-# arg has no annotation
 def test_get_optional_annotated_field_data_no_annotation():
+    """\
+    Test for get_optional_annotated_field_data when the first arg has no
+    annotation.
+    """
+
     class MockModel(pydantic.BaseModel):
         field1: str | UniqueList[str] = pydantic.Field(
             description="desc",
@@ -412,15 +468,15 @@ def test_get_optional_annotated_field_data_no_annotation():
     assert entry.examples is None
 
 
-# Test for `get_optional_annotated_field_data` when no annotation
-# is provided
 def test_get_optional_annotated_field_data_none():
+    """Test for get_optional_annotated_field_data when no field is provided."""
+
     entry = FieldEntry("nice try")
     assert get_optional_annotated_field_data(entry, None) is None
 
 
-# Test for `get_optional_annotated_field_data` when no annotation
-# is provided
 def test_get_enum_field_data_none():
+    """Test for get_enum_field_data when no annotation is provided."""
+
     entry = FieldEntry("nice try")
     assert get_enum_field_data(entry, None) is None
