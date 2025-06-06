@@ -37,20 +37,13 @@ from docutils.core import publish_doctree  # type: ignore[reportUnknownVariableT
 from docutils.parsers.rst import directives
 from pydantic.fields import FieldInfo
 from sphinx.util.docutils import SphinxDirective
+from typing_extensions import override
 
 # Compiled regex patterns for type formatting
 LITERAL_LIST_EXPR = re.compile(r"Literal\[(.*?)\]")
 LIST_ITEM_EXPR = re.compile(r"'([^']*)'")
 TYPE_STR_EXPR = re.compile(r"<[^ ]+ '([^']+)'>")
 MODULE_PREFIX_EXPR = re.compile(r"\b(?:\w+\.)+(\w+)")
-
-
-class PrettyListDumper(yaml.Dumper):
-    """Custom YAML dumper for indenting lists."""
-
-    def increase_indent(self, flow: bool = False, indentless: bool = False) -> None:  # noqa: ARG002, FBT001, FBT002
-        """Override the default increase_indent method from Emitter."""
-        return super().increase_indent(flow, False)  # noqa: FBT003
 
 
 class FieldEntry:
@@ -72,6 +65,15 @@ class FieldEntry:
         self.description = None
         self.enum_values = None
         self.examples = None
+
+
+@override
+class PrettyListDumper(yaml.Dumper):
+    """Custom YAML dumper for indenting lists."""
+
+    @override
+    def increase_indent(self, flow: bool = False, indentless: bool = False) -> None:
+        return super().increase_indent(flow, indentless=False)
 
 
 class KitbashFieldDirective(SphinxDirective):
