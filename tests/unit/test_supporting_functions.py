@@ -128,6 +128,12 @@ This is the key description
 
 """
 
+LIST_YAML = """\
+key:
+  - item1: val1
+    item2: val2
+"""
+
 
 # Test for `find_field_data`
 def test_find_fieldinfo():
@@ -247,6 +253,16 @@ def test_build_valid_examples_block():
 
     # comparing strings because docutils `__eq__`
     # method compares by identity rather than state
+    assert str(expected) == str(actual)
+
+
+def test_build_list_example():
+    """Test for build_examples_block when rendering lists of dicts."""
+    expected = nodes.literal_block(text=(LIST_YAML.rstrip("\n")))
+    expected["language"] = "yaml"
+
+    actual = build_examples_block("key", "[{item1: val1, item2: val2}]")
+
     assert str(expected) == str(actual)
 
 
