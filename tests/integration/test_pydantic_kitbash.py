@@ -62,11 +62,15 @@ def test_pydantic_kitbash_integration(example_project):
         assert admonition_content[0].text == "Important"  # admonition title
         assert admonition_content[1].text == "Deprecated. ew."  # admonition content
 
-    # Check if type is correct
-    field_type = getattr(
-        soup.find("code", {"class": "docutils literal notranslate"}), "text", None
-    )
-    assert field_type == "str"
+    # Check if type is present and correct
+    type_literal_block = soup.find("code", {"class": "docutils literal notranslate"})
+    if type_literal_block:
+        field_prefix = type_literal_block.previous_sibling
+        field_type = getattr(type_literal_block, "text", None)
+        assert field_prefix == "One of: "
+        assert field_type == "['val1', 'val2']"
+    else:
+        pytest.fail("Type not found in rendered output")
 
     # Check if YAML example is highlighted correctly
     assert getattr(soup.find("span", {"class": "nt"}), "text", None) == "test"

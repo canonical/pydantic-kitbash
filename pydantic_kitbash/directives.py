@@ -464,9 +464,17 @@ def create_field_node(field_entry: FieldEntry) -> nodes.section:
     if field_entry.field_type:
         type_header = nodes.paragraph()
         type_header += nodes.strong(text="Type")
-        type_value = nodes.paragraph()
-        type_value += nodes.literal(text=field_entry.field_type)
         field_node += type_header
+        type_value = nodes.paragraph()
+
+        if match := re.search(LITERAL_LIST_EXPR, str(field_entry.field_type)):
+            list_str = match.group(1)
+            list_items = str(re.findall(LIST_ITEM_EXPR, list_str))
+            type_value += nodes.Text("One of: ")
+            type_value += nodes.literal(text=list_items)
+        else:
+            type_value += nodes.literal(text=field_entry.field_type)
+
         field_node += type_value
 
     if field_entry.description:
@@ -755,11 +763,7 @@ def format_type_string(type_str: type[object] | Any) -> str:  # noqa: ANN401
     """
     result = ""
 
-    if match := re.search(LITERAL_LIST_EXPR, str(type_str)):
-        string_list = match.group(1)
-        list_items = re.findall(LIST_ITEM_EXPR, string_list)
-        result = f"Any of: {list_items}"
-    elif type_str is not None:
+    if type_str is not None:
         result = re.sub(MODULE_PREFIX_EXPR, r"\1", str(type_str))
         if type_match := re.match(TYPE_STR_EXPR, str(type_str)):
             result = type_match.group(1).split(".")[-1]

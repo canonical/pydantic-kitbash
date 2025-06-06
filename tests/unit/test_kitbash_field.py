@@ -15,9 +15,7 @@
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import enum
-from pathlib import Path
-from re import M
-from typing import Annotated, Any, cast
+from typing import Annotated, Any
 
 import pydantic
 import pytest
@@ -70,6 +68,8 @@ class MockEnum(enum.Enum):
 
 
 class MockModel(pydantic.BaseModel):
+    """MockModel contains fields of varying structure for testing."""
+
     mock_field: int = pydantic.Field(
         description="description",
         alias="test",
@@ -138,11 +138,15 @@ def fake_field_directive(request: pytest.FixtureRequest) -> FakeFieldDirective:
     indirect=True,
 )
 def test_kitbash_field_invalid(fake_field_directive: FakeFieldDirective):
+    """Test for KitbashFieldDirective when passed a nonexistent field."""
+
     with pytest.raises(ValueError, match="Could not find field: i_dont_exist"):
         fake_field_directive.run()
 
 
 def test_kitbash_field(fake_field_directive: FakeFieldDirective):
+    """Test for KitbashFieldDirective."""
+
     expected = nodes.section(ids=["test"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="test")
@@ -184,6 +188,8 @@ def test_kitbash_field(fake_field_directive: FakeFieldDirective):
 def test_kitbash_field_name_options(
     fake_field_directive: FakeFieldDirective, title_text: str
 ):
+    """Test for the -name options in KitbashFieldDirective."""
+
     expected = nodes.section(ids=[title_text])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text=title_text)
@@ -216,6 +222,8 @@ def test_kitbash_field_name_options(
     "fake_field_directive", [{"options": {"override-type": "override"}}], indirect=True
 )
 def test_kitbash_field_override_type(fake_field_directive: FakeFieldDirective):
+    """Test for the override-type option in KitbashFieldDirective."""
+
     expected = nodes.section(ids=["test"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="test")
@@ -250,6 +258,8 @@ def test_kitbash_field_override_type(fake_field_directive: FakeFieldDirective):
     indirect=True,
 )
 def test_kitbash_field_skip_examples(fake_field_directive: FakeFieldDirective):
+    """Test for the skip-examples option in KitbashFieldDirective."""
+
     expected = nodes.section(ids=["bad_example"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="bad_example")
@@ -280,6 +290,8 @@ def test_kitbash_field_skip_examples(fake_field_directive: FakeFieldDirective):
     indirect=True,
 )
 def test_kitbash_field_enum(fake_field_directive: FakeFieldDirective):
+    """Test for the KitbashFieldDirective when passed an enum field."""
+
     expected = nodes.section(ids=["enum_field"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="enum_field")
@@ -315,6 +327,8 @@ def test_kitbash_field_enum(fake_field_directive: FakeFieldDirective):
     indirect=True,
 )
 def test_kitbash_field_union_type(fake_field_directive: FakeFieldDirective):
+    """Test for the KitbashFieldDirective when passed a types.UnionType field."""
+
     expected = nodes.section(ids=["uniontype_field"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="uniontype_field")
@@ -345,6 +359,8 @@ def test_kitbash_field_union_type(fake_field_directive: FakeFieldDirective):
     indirect=True,
 )
 def test_kitbash_field_enum_union(fake_field_directive: FakeFieldDirective):
+    """Test for the KitbashFieldDirective when passed an enum UnionType field."""
+
     expected = nodes.section(ids=["enum_uniontype"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="enum_uniontype")
@@ -381,6 +397,8 @@ def test_kitbash_field_enum_union(fake_field_directive: FakeFieldDirective):
     indirect=True,
 )
 def test_kitbash_field_typing_union(fake_field_directive: FakeFieldDirective):
+    """Test for KitbashFieldDirective when passed a typing.Union field."""
+
     expected = nodes.section(ids=["typing_union"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="typing_union")
