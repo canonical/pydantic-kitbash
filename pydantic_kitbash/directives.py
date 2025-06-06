@@ -37,6 +37,7 @@ from docutils.core import publish_doctree  # type: ignore[reportUnknownVariableT
 from docutils.parsers.rst import directives
 from pydantic.fields import FieldInfo
 from sphinx.util.docutils import SphinxDirective
+from typing_extensions import override
 
 # Compiled regex patterns for type formatting
 LITERAL_LIST_EXPR = re.compile(r"Literal\[(.*?)\]")
@@ -64,6 +65,15 @@ class FieldEntry:
         self.description = None
         self.enum_values = None
         self.examples = None
+
+
+@override
+class PrettyListDumper(yaml.Dumper):
+    """Custom YAML dumper for indenting lists."""
+
+    @override
+    def increase_indent(self, flow: bool = False, indentless: bool = False) -> None:
+        return super().increase_indent(flow, indentless=False)
 
 
 class KitbashFieldDirective(SphinxDirective):
@@ -515,9 +525,14 @@ def build_examples_block(field_name: str, example: str) -> nodes.literal_block:
     """
     example = f"{field_name.rsplit('.', maxsplit=1)[-1]}: {example}"
     try:
-        yaml_str = yaml.dump(yaml.safe_load(example), default_flow_style=False)
+        yaml_str = yaml.dump(
+            yaml.safe_load(example),
+            Dumper=PrettyListDumper,
+            default_flow_style=False,
+            sort_keys=False,
+        )
         yaml_str = yaml_str.rstrip("\n")
-        yaml_str = yaml_str.replace("- ", "  - ").removesuffix("...")
+        yaml_str = yaml_str.removesuffix("...")
     except yaml.YAMLError as e:
         warnings.warn(
             f"Invalid YAML for field {field_name}: {e}",
