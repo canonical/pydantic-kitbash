@@ -202,7 +202,6 @@ def build_section_node(node_id: str, title: str) -> nodes.section:
 
     Args:
         node_id (str): The ref ID (label) for the field.
-
         title (str): The title node content (heading) for the field
 
     Returns:
@@ -210,7 +209,7 @@ def build_section_node(node_id: str, title: str) -> nodes.section:
 
     """
 
-    section_node = nodes.section(ids=[node_id])
+    section_node = nodes.section(ids=[title, node_id])
     section_node["classes"].append("kitbash-entry")
     title_node = nodes.title(text=title)
     section_node += title_node

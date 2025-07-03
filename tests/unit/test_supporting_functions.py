@@ -224,7 +224,7 @@ def test_create_field_node():
     """Test for create_field_node."""
 
     # need to set up section node manually
-    expected = nodes.section(ids=["key-name"])
+    expected = nodes.section(ids=["key-name", "key-name"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="key-name")
     expected += title_node
@@ -252,7 +252,7 @@ def test_create_field_node_literal_list():
     """Test for create_field_node with a FieldEntry of type Literal[]."""
 
     # need to set up section node manually
-    expected = nodes.section(ids=["key-name"])
+    expected = nodes.section(ids=["key-name", "key-name"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="key-name")
     expected += title_node
@@ -276,7 +276,7 @@ def test_create_minimal_field_node():
     """Test for create_field_node with a minimal set of attributes."""
 
     # need to set up section node manually
-    expected = nodes.section(ids=["key-name"])
+    expected = nodes.section(ids=["key-name", "key-name"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="key-name")
     expected += title_node

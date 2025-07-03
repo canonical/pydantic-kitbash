@@ -512,7 +512,7 @@ def create_field_node(field_entry: FieldEntry) -> nodes.section:
         nodes.section: A section containing well-formed output for each provided field attribute.
 
     """
-    field_node = nodes.section(ids=[field_entry.label])
+    field_node = nodes.section(ids=[field_entry.alias, field_entry.label])
     field_node["classes"] = ["kitbash-entry"]
     title_node = nodes.title(text=field_entry.alias)
     field_node += title_node
