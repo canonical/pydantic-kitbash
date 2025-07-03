@@ -51,6 +51,7 @@ class FieldEntry:
 
     name: str
     alias: str
+    label: str
     deprecation_warning: str | None
     field_type: str | None
     description: str | None
@@ -60,6 +61,7 @@ class FieldEntry:
     def __init__(self, name: str) -> None:
         self.name = name
         self.alias = name
+        self.label = name
         self.deprecation_warning = None
         self.field_type = None
         self.description = None
@@ -88,6 +90,7 @@ class KitbashFieldDirective(SphinxDirective):
         "override-type": directives.unchanged,
         "prepend-name": directives.unchanged,
         "append-name": directives.unchanged,
+        "label": directives.unchanged,
     }
 
     def run(self) -> list[nodes.Node]:
@@ -157,6 +160,18 @@ class KitbashFieldDirective(SphinxDirective):
             None if "skip-examples" in self.options else field_entry.examples
         )
 
+        state = getattr(self, "state", None)
+
+        source_file = (
+            f"{state.document['source'].rsplit('/', maxsplit=1)[-1].removesuffix('.rst')}-"
+            if state
+            else ""
+        )
+
+        label_text = self.options.get("label", f"{source_file}{field_entry.alias}")
+
+        field_entry.label = nodes.make_id(label_text)
+
         # Get strings to concatenate with `field_alias`
         name_prefix = self.options.get("prepend-name", "")
         name_suffix = self.options.get("append-name", "")
@@ -168,6 +183,17 @@ class KitbashFieldDirective(SphinxDirective):
         field_entry.alias = (
             f"{field_entry.alias}.{name_suffix}" if name_suffix else field_entry.alias
         )
+
+        if state:
+            self.env.app.env.domaindata["std"]["labels"][field_entry.label] = (
+                self.env.docname,
+                field_entry.label,
+                field_entry.alias,
+            )
+            self.env.app.env.domaindata["std"]["anonlabels"][field_entry.label] = (
+                self.env.docname,
+                field_entry.label,
+            )
 
         return [create_field_node(field_entry)]
 
@@ -276,6 +302,20 @@ class KitbashModelDirective(SphinxDirective):
                 elif is_enum_type(field_params.annotation):
                     get_enum_field_data(field_entry, field_params.annotation)
 
+                state = getattr(self, "state", None)
+
+                source_file = (
+                    f"{state.document['source'].rsplit('/', maxsplit=1)[-1].removesuffix('.rst')}-"
+                    if state
+                    else ""
+                )
+
+                label_text = self.options.get(
+                    "label", f"{source_file}{field_entry.alias}"
+                )
+
+                field_entry.label = nodes.make_id(label_text)
+
                 # Get strings to concatenate with `field_alias`
                 name_prefix = self.options.get("prepend-name", "")
                 name_suffix = self.options.get("append-name", "")
@@ -287,10 +327,23 @@ class KitbashModelDirective(SphinxDirective):
                     else field_entry.alias
                 )
                 field_entry.alias = (
-                    f"{field_entry.alias}.{field_entry.alias}"
+                    f"{field_entry.alias}.{name_suffix}"
                     if name_suffix
                     else field_entry.alias
                 )
+
+                if state:
+                    self.env.app.env.domaindata["std"]["labels"][field_entry.label] = (
+                        self.env.docname,
+                        field_entry.label,
+                        field_entry.alias,
+                    )
+                    self.env.app.env.domaindata["std"]["anonlabels"][
+                        field_entry.label
+                    ] = (
+                        self.env.docname,
+                        field_entry.label,
+                    )
 
                 class_node.append(create_field_node(field_entry))
 
@@ -461,7 +514,7 @@ def create_field_node(field_entry: FieldEntry) -> nodes.section:
         nodes.section: A section containing well-formed output for each provided field attribute.
 
     """
-    field_node = nodes.section(ids=[field_entry.alias])
+    field_node = nodes.section(ids=[field_entry.label])
     field_node["classes"] = ["kitbash-entry"]
     title_node = nodes.title(text=field_entry.alias)
     field_node += title_node
