@@ -178,32 +178,6 @@ def test_kitbash_field(fake_field_directive: FakeFieldDirective):
     assert str(expected) == str(actual)
 
 
-def test_fake(fake_field_directive: FakeFieldDirective):
-    """Test for KitbashFieldDirective."""
-
-    expected = nodes.section(ids=["test"])
-    expected["classes"].append("kitbash-entry")
-
-    field_entry = """\
-
-    .. _label:
-
-    test
-    ----
-
-    this is how Sphinx renders refs.
-
-    """
-
-    field_entry = strip_whitespace(field_entry)
-    expected += publish_doctree(field_entry).children
-    actual = fake_field_directive.run()[0]
-
-    print(f"\n\n{expected}\n\n")
-
-    assert str(expected) == str(actual)
-
-
 @pytest.mark.parametrize(
     ("fake_field_directive", "title_text"),
     [
