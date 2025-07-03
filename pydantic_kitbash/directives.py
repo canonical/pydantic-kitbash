@@ -518,6 +518,9 @@ def create_field_node(field_entry: FieldEntry) -> nodes.section:
     field_node["classes"] = ["kitbash-entry"]
     title_node = nodes.title(text=field_entry.alias)
     field_node += title_node
+    target_node = nodes.target()
+    target_node["refid"] = field_entry.label
+    field_node += target_node
 
     if field_entry.deprecation_warning:
         deprecated_node = nodes.important()

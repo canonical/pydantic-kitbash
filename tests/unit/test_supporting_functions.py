@@ -228,10 +228,14 @@ def test_create_field_node():
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="key-name")
     expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "key-name"
+    expected += target_node
     expected += publish_doctree(KEY_ENTRY_RST).children
 
     test_entry = FieldEntry("key-name")
     test_entry.alias = "key-name"
+    test_entry.label = "key-name"
     test_entry.deprecation_warning = "Don't use this."
     test_entry.field_type = "str"
     test_entry.description = "This is the key description"
@@ -252,10 +256,14 @@ def test_create_field_node_literal_list():
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="key-name")
     expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "key-name"
+    expected += target_node
     expected += publish_doctree(LITERAL_LIST_ENTRY_RST).children
 
     test_entry = FieldEntry("key-name")
     test_entry.alias = "key-name"
+    test_entry.label = "key-name"
     test_entry.deprecation_warning = "Don't use this."
     test_entry.field_type = "Literal['one', 'two', 'three']"
     test_entry.description = "This is the key description"
@@ -272,6 +280,9 @@ def test_create_minimal_field_node():
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="key-name")
     expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "key-name"
+    expected += target_node
 
     test_entry = FieldEntry("key-name")
 

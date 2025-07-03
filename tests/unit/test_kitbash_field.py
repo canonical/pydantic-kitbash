@@ -151,6 +151,9 @@ def test_kitbash_field(fake_field_directive: FakeFieldDirective):
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="test")
     expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "test"
+    expected += target_node
 
     field_entry = """\
 
@@ -196,6 +199,9 @@ def test_kitbash_field_name_options(
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text=title_text)
     expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "test"
+    expected += target_node
 
     field_entry = """\
 
@@ -230,6 +236,9 @@ def test_kitbash_field_override_type(fake_field_directive: FakeFieldDirective):
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="test")
     expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "test"
+    expected += target_node
 
     field_entry = """\
 
@@ -264,6 +273,9 @@ def test_kitbash_field_label_option(fake_field_directive: FakeFieldDirective):
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="test")
     expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "custom-label"
+    expected += target_node
 
     field_entry = """\
 
@@ -300,6 +312,9 @@ def test_kitbash_field_skip_examples(fake_field_directive: FakeFieldDirective):
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="bad_example")
     expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "bad-example"
+    expected += target_node
 
     field_entry = """\
 
@@ -332,6 +347,9 @@ def test_kitbash_field_enum(fake_field_directive: FakeFieldDirective):
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="enum_field")
     expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "enum-field"
+    expected += target_node
 
     field_entry = """\
 
@@ -369,6 +387,9 @@ def test_kitbash_field_union_type(fake_field_directive: FakeFieldDirective):
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="uniontype_field")
     expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "uniontype-field"
+    expected += target_node
 
     field_entry = """\
 
@@ -401,6 +422,9 @@ def test_kitbash_field_enum_union(fake_field_directive: FakeFieldDirective):
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="enum_uniontype")
     expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "enum-uniontype"
+    expected += target_node
 
     field_entry = """\
 
@@ -439,6 +463,9 @@ def test_kitbash_field_typing_union(fake_field_directive: FakeFieldDirective):
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="typing_union")
     expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "typing-union"
+    expected += target_node
 
     field_entry = """\
 
