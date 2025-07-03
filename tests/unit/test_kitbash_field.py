@@ -147,10 +147,15 @@ def test_kitbash_field_invalid(fake_field_directive: FakeFieldDirective):
 def test_kitbash_field(fake_field_directive: FakeFieldDirective):
     """Test for KitbashFieldDirective."""
 
-    expected = nodes.section(ids=["test"])
+    # The IDs are duplicated because the test directives have no state.
+    # In actual usage, the second ID will always be prefixed with the filename.
+    expected = nodes.section(ids=["test", "test"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="test")
     expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "test"
+    expected += target_node
 
     field_entry = """\
 
@@ -176,24 +181,55 @@ def test_kitbash_field(fake_field_directive: FakeFieldDirective):
 
 
 @pytest.mark.parametrize(
-    ("fake_field_directive", "title_text"),
-    [
-        pytest.param(
-            {"options": {"prepend-name": "app"}}, "app.test", id="prepend-name"
-        ),
-        pytest.param({"options": {"append-name": "app"}}, "test.app", id="append-name"),
-    ],
-    indirect=["fake_field_directive"],
+    "fake_field_directive", [{"options": {"prepend-name": "prefix"}}], indirect=True
 )
-def test_kitbash_field_name_options(
-    fake_field_directive: FakeFieldDirective, title_text: str
-):
+def test_kitbash_field_prepend_name(fake_field_directive: FakeFieldDirective):
     """Test for the -name options in KitbashFieldDirective."""
 
-    expected = nodes.section(ids=[title_text])
+    expected = nodes.section(ids=["prefix.test", "test"])
     expected["classes"].append("kitbash-entry")
-    title_node = nodes.title(text=title_text)
+    title_node = nodes.title(text="prefix.test")
     expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "test"
+    expected += target_node
+
+    field_entry = """\
+
+    .. important::
+
+        Deprecated. ew.
+
+    **Type**
+
+    ``int``
+
+    **Description**
+
+    description
+
+    """
+
+    field_entry = strip_whitespace(field_entry)
+    expected += publish_doctree(field_entry).children
+    actual = fake_field_directive.run()[0]
+
+    assert str(expected) == str(actual)
+
+
+@pytest.mark.parametrize(
+    "fake_field_directive", [{"options": {"append-name": "suffix"}}], indirect=True
+)
+def test_kitbash_field_append_name(fake_field_directive: FakeFieldDirective):
+    """Test for the -name options in KitbashFieldDirective."""
+
+    expected = nodes.section(ids=["test.suffix", "test"])
+    expected["classes"].append("kitbash-entry")
+    title_node = nodes.title(text="test.suffix")
+    expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "test"
+    expected += target_node
 
     field_entry = """\
 
@@ -224,10 +260,13 @@ def test_kitbash_field_name_options(
 def test_kitbash_field_override_type(fake_field_directive: FakeFieldDirective):
     """Test for the override-type option in KitbashFieldDirective."""
 
-    expected = nodes.section(ids=["test"])
+    expected = nodes.section(ids=["test", "test"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="test")
     expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "test"
+    expected += target_node
 
     field_entry = """\
 
@@ -253,6 +292,43 @@ def test_kitbash_field_override_type(fake_field_directive: FakeFieldDirective):
 
 
 @pytest.mark.parametrize(
+    "fake_field_directive", [{"options": {"label": "custom-label"}}], indirect=True
+)
+def test_kitbash_field_label_option(fake_field_directive: FakeFieldDirective):
+    """Test for the override-type option in KitbashFieldDirective."""
+
+    expected = nodes.section(ids=["test", "custom-label"])
+    expected["classes"].append("kitbash-entry")
+    title_node = nodes.title(text="test")
+    expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "custom-label"
+    expected += target_node
+
+    field_entry = """\
+
+    .. important::
+
+        Deprecated. ew.
+
+    **Type**
+
+    ``int``
+
+    **Description**
+
+    description
+
+    """
+
+    field_entry = strip_whitespace(field_entry)
+    expected += publish_doctree(field_entry).children
+    actual = fake_field_directive.run()[0]
+
+    assert str(expected) == str(actual)
+
+
+@pytest.mark.parametrize(
     "fake_field_directive",
     [{"model_field": "bad_example", "options": {"skip-examples": None}}],
     indirect=True,
@@ -260,10 +336,13 @@ def test_kitbash_field_override_type(fake_field_directive: FakeFieldDirective):
 def test_kitbash_field_skip_examples(fake_field_directive: FakeFieldDirective):
     """Test for the skip-examples option in KitbashFieldDirective."""
 
-    expected = nodes.section(ids=["bad_example"])
+    expected = nodes.section(ids=["bad_example", "bad_example"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="bad_example")
     expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "bad_example"
+    expected += target_node
 
     field_entry = """\
 
@@ -292,10 +371,13 @@ def test_kitbash_field_skip_examples(fake_field_directive: FakeFieldDirective):
 def test_kitbash_field_enum(fake_field_directive: FakeFieldDirective):
     """Test for the KitbashFieldDirective when passed an enum field."""
 
-    expected = nodes.section(ids=["enum_field"])
+    expected = nodes.section(ids=["enum_field", "enum_field"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="enum_field")
     expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "enum_field"
+    expected += target_node
 
     field_entry = """\
 
@@ -329,10 +411,13 @@ def test_kitbash_field_enum(fake_field_directive: FakeFieldDirective):
 def test_kitbash_field_union_type(fake_field_directive: FakeFieldDirective):
     """Test for the KitbashFieldDirective when passed a types.UnionType field."""
 
-    expected = nodes.section(ids=["uniontype_field"])
+    expected = nodes.section(ids=["uniontype_field", "uniontype_field"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="uniontype_field")
     expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "uniontype_field"
+    expected += target_node
 
     field_entry = """\
 
@@ -361,10 +446,13 @@ def test_kitbash_field_union_type(fake_field_directive: FakeFieldDirective):
 def test_kitbash_field_enum_union(fake_field_directive: FakeFieldDirective):
     """Test for the KitbashFieldDirective when passed an enum UnionType field."""
 
-    expected = nodes.section(ids=["enum_uniontype"])
+    expected = nodes.section(ids=["enum_uniontype", "enum_uniontype"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="enum_uniontype")
     expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "enum_uniontype"
+    expected += target_node
 
     field_entry = """\
 
@@ -399,10 +487,13 @@ def test_kitbash_field_enum_union(fake_field_directive: FakeFieldDirective):
 def test_kitbash_field_typing_union(fake_field_directive: FakeFieldDirective):
     """Test for KitbashFieldDirective when passed a typing.Union field."""
 
-    expected = nodes.section(ids=["typing_union"])
+    expected = nodes.section(ids=["typing_union", "typing_union"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="typing_union")
     expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "typing_union"
+    expected += target_node
 
     field_entry = """\
 

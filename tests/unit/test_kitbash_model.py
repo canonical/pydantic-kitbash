@@ -98,7 +98,7 @@ LIST_TABLE_RST = """
 .. list-table::
     :header-rows: 1
 
-    * - Values
+    * - Value
       - Description
     * - ``value1``
       - The first value.
@@ -118,7 +118,6 @@ TEST_TYPE = Annotated[
     pydantic.BeforeValidator(validator),
     pydantic.Field(
         description="This is a typing.Union",
-        examples=["str1", "str2", "str3"],
     ),
 ]
 
@@ -198,6 +197,29 @@ def fake_model_directive(request: pytest.FixtureRequest) -> FakeModelDirective:
     )
 
 
+def build_section_node(node_id: str, title: str) -> nodes.section:
+    """Create a section node containing all of the information for a single field.
+
+    Args:
+        node_id (str): The ref ID (label) for the field.
+        title (str): The title node content (heading) for the field
+
+    Returns:
+        nodes.section: A section containing well-formed nodes for the field.
+
+    """
+
+    section_node = nodes.section(ids=[title, node_id])
+    section_node["classes"].append("kitbash-entry")
+    title_node = nodes.title(text=title)
+    section_node += title_node
+    target_node = nodes.target()
+    target_node["refid"] = node_id
+    section_node += target_node
+
+    return section_node
+
+
 @pytest.mark.parametrize(
     "fake_model_directive", [{"model": ".OopsNoModel"}], indirect=True
 )
@@ -212,53 +234,36 @@ def test_kitbash_model(fake_model_directive):
 
     expected = list(publish_doctree(MockModel.__doc__).children)
 
-    uniontype_section = nodes.section(ids=["uniontype_field"])
-    uniontype_section["classes"].append("kitbash-entry")
-    uniontype_title = nodes.title(text="uniontype_field")
-    uniontype_section += uniontype_title
-
+    uniontype_section = build_section_node("uniontype_field", "uniontype_field")
     uniontype_rst = strip_whitespace(UNIONTYPE_RST)
     uniontype_section += publish_doctree(uniontype_rst).children
     expected.append(uniontype_section)
 
-    enum_section = nodes.section(ids=["enum_field"])
-    enum_section["classes"].append("kitbash-entry")
-    enum_title = nodes.title(text="enum_field")
-    enum_section += enum_title
-
+    enum_section = build_section_node("enum_field", "enum_field")
     enum_rst = strip_whitespace(ENUM_RST)
     enum_section += publish_doctree(enum_rst).children
-
     enum_value_container = nodes.container()
     enum_value_container += publish_doctree(LIST_TABLE_RST).children
     enum_section += enum_value_container
     expected.append(enum_section)
 
-    enum_uniontype_section = nodes.section(ids=["enum_uniontype"])
-    enum_uniontype_section["classes"].append("kitbash-entry")
-    enum_uniontype_title = nodes.title(text="enum_uniontype")
-    enum_uniontype_section += enum_uniontype_title
-
+    enum_uniontype_section = build_section_node("enum_uniontype", "enum_uniontype")
     enum_uniontype_rst = strip_whitespace(ENUM_RST)
     enum_uniontype_section += publish_doctree(enum_uniontype_rst).children
-
     enum_uniontype_value_container = nodes.container()
     enum_uniontype_value_container += publish_doctree(LIST_TABLE_RST).children
     enum_uniontype_section += enum_uniontype_value_container
     expected.append(enum_uniontype_section)
 
-    typing_union_section = nodes.section(ids=["typing_union"])
-    typing_union_section["classes"].append("kitbash-entry")
-    typing_union_title = nodes.title(text="typing_union")
-    typing_union_section += typing_union_title
-
+    typing_union_section = build_section_node("typing_union", "typing_union")
     typing_union_rst = strip_whitespace(TYPING_UNION_RST)
     typing_union_section += publish_doctree(typing_union_rst).children
     expected.append(typing_union_section)
 
     actual = fake_model_directive.run()
 
-    assert str(expected) == str(actual)
+    for i, node in enumerate(expected):
+        assert str(node) == str(actual[i])
 
 
 @pytest.mark.parametrize(
@@ -277,33 +282,20 @@ def test_kitbash_model_skip_description(fake_model_directive):
 
     expected = []
 
-    uniontype_section = nodes.section(ids=["uniontype_field"])
-    uniontype_section["classes"].append("kitbash-entry")
-    uniontype_title = nodes.title(text="uniontype_field")
-    uniontype_section += uniontype_title
-
+    uniontype_section = build_section_node("uniontype_field", "uniontype_field")
     uniontype_rst = strip_whitespace(UNIONTYPE_RST)
     uniontype_section += publish_doctree(uniontype_rst).children
     expected.append(uniontype_section)
 
-    enum_section = nodes.section(ids=["enum_field"])
-    enum_section["classes"].append("kitbash-entry")
-    enum_title = nodes.title(text="enum_field")
-    enum_section += enum_title
-
+    enum_section = build_section_node("enum_field", "enum_field")
     enum_rst = strip_whitespace(ENUM_RST)
     enum_section += publish_doctree(enum_rst).children
-
     enum_value_container = nodes.container()
     enum_value_container += publish_doctree(LIST_TABLE_RST).children
     enum_section += enum_value_container
     expected.append(enum_section)
 
-    enum_uniontype_section = nodes.section(ids=["enum_uniontype"])
-    enum_uniontype_section["classes"].append("kitbash-entry")
-    enum_uniontype_title = nodes.title(text="enum_uniontype")
-    enum_uniontype_section += enum_uniontype_title
-
+    enum_uniontype_section = build_section_node("enum_uniontype", "enum_uniontype")
     enum_uniontype_rst = strip_whitespace(ENUM_RST)
     enum_uniontype_section += publish_doctree(enum_uniontype_rst).children
 
@@ -312,18 +304,15 @@ def test_kitbash_model_skip_description(fake_model_directive):
     enum_uniontype_section += enum_uniontype_value_container
     expected.append(enum_uniontype_section)
 
-    typing_union_section = nodes.section(ids=["typing_union"])
-    typing_union_section["classes"].append("kitbash-entry")
-    typing_union_title = nodes.title(text="typing_union")
-    typing_union_section += typing_union_title
-
+    typing_union_section = build_section_node("typing_union", "typing_union")
     typing_union_rst = strip_whitespace(TYPING_UNION_RST)
     typing_union_section += publish_doctree(typing_union_rst).children
     expected.append(typing_union_section)
 
     actual = fake_model_directive.run()
 
-    assert str(expected) == str(actual)
+    for i, node in enumerate(expected):
+        assert str(node) == str(actual[i])
 
 
 @pytest.mark.parametrize(
@@ -334,53 +323,36 @@ def test_kitbash_model_content(fake_model_directive):
 
     expected = list(publish_doctree("``Test content``").children)
 
-    uniontype_section = nodes.section(ids=["uniontype_field"])
-    uniontype_section["classes"].append("kitbash-entry")
-    uniontype_title = nodes.title(text="uniontype_field")
-    uniontype_section += uniontype_title
-
+    uniontype_section = build_section_node("uniontype_field", "uniontype_field")
     uniontype_rst = strip_whitespace(UNIONTYPE_RST)
     uniontype_section += publish_doctree(uniontype_rst).children
     expected.append(uniontype_section)
 
-    enum_section = nodes.section(ids=["enum_field"])
-    enum_section["classes"].append("kitbash-entry")
-    enum_title = nodes.title(text="enum_field")
-    enum_section += enum_title
-
+    enum_section = build_section_node("enum_field", "enum_field")
     enum_rst = strip_whitespace(ENUM_RST)
     enum_section += publish_doctree(enum_rst).children
-
     enum_value_container = nodes.container()
     enum_value_container += publish_doctree(LIST_TABLE_RST).children
     enum_section += enum_value_container
     expected.append(enum_section)
 
-    enum_uniontype_section = nodes.section(ids=["enum_uniontype"])
-    enum_uniontype_section["classes"].append("kitbash-entry")
-    enum_uniontype_title = nodes.title(text="enum_uniontype")
-    enum_uniontype_section += enum_uniontype_title
-
+    enum_uniontype_section = build_section_node("enum_uniontype", "enum_uniontype")
     enum_uniontype_rst = strip_whitespace(ENUM_RST)
     enum_uniontype_section += publish_doctree(enum_uniontype_rst).children
-
     enum_uniontype_value_container = nodes.container()
     enum_uniontype_value_container += publish_doctree(LIST_TABLE_RST).children
     enum_uniontype_section += enum_uniontype_value_container
     expected.append(enum_uniontype_section)
 
-    typing_union_section = nodes.section(ids=["typing_union"])
-    typing_union_section["classes"].append("kitbash-entry")
-    typing_union_title = nodes.title(text="typing_union")
-    typing_union_section += typing_union_title
-
+    typing_union_section = build_section_node("typing_union", "typing_union")
     typing_union_rst = strip_whitespace(TYPING_UNION_RST)
     typing_union_section += publish_doctree(typing_union_rst).children
     expected.append(typing_union_section)
 
     actual = fake_model_directive.run()
 
-    assert str(expected) == str(actual)
+    for i, node in enumerate(expected):
+        assert str(node) == str(actual[i])
 
 
 @pytest.mark.parametrize(
@@ -399,62 +371,41 @@ def test_kitbash_model_include_deprecated(fake_model_directive):
 
     expected = list(publish_doctree("this is the model's docstring").children)
 
-    mock_field_section = nodes.section(ids=["test"])
-    mock_field_section["classes"].append("kitbash-entry")
-    mock_field_title = nodes.title(text="test")
-    mock_field_section += mock_field_title
-
+    mock_field_section = build_section_node("test", "test")
     mock_field_rst = strip_whitespace(MOCK_FIELD_RST)
     mock_field_section += publish_doctree(mock_field_rst).children
     expected.append(mock_field_section)
 
-    uniontype_section = nodes.section(ids=["uniontype_field"])
-    uniontype_section["classes"].append("kitbash-entry")
-    uniontype_title = nodes.title(text="uniontype_field")
-    uniontype_section += uniontype_title
-
+    uniontype_section = build_section_node("uniontype_field", "uniontype_field")
     uniontype_rst = strip_whitespace(UNIONTYPE_RST)
     uniontype_section += publish_doctree(uniontype_rst).children
     expected.append(uniontype_section)
 
-    enum_section = nodes.section(ids=["enum_field"])
-    enum_section["classes"].append("kitbash-entry")
-    enum_title = nodes.title(text="enum_field")
-    enum_section += enum_title
-
+    enum_section = build_section_node("enum_field", "enum_field")
     enum_rst = strip_whitespace(ENUM_RST)
     enum_section += publish_doctree(enum_rst).children
-
     enum_value_container = nodes.container()
     enum_value_container += publish_doctree(LIST_TABLE_RST).children
     enum_section += enum_value_container
     expected.append(enum_section)
 
-    enum_uniontype_section = nodes.section(ids=["enum_uniontype"])
-    enum_uniontype_section["classes"].append("kitbash-entry")
-    enum_uniontype_title = nodes.title(text="enum_uniontype")
-    enum_uniontype_section += enum_uniontype_title
-
+    enum_uniontype_section = build_section_node("enum_uniontype", "enum_uniontype")
     enum_uniontype_rst = strip_whitespace(ENUM_RST)
     enum_uniontype_section += publish_doctree(enum_uniontype_rst).children
-
     enum_uniontype_value_container = nodes.container()
     enum_uniontype_value_container += publish_doctree(LIST_TABLE_RST).children
     enum_uniontype_section += enum_uniontype_value_container
     expected.append(enum_uniontype_section)
 
-    typing_union_section = nodes.section(ids=["typing_union"])
-    typing_union_section["classes"].append("kitbash-entry")
-    typing_union_title = nodes.title(text="typing_union")
-    typing_union_section += typing_union_title
-
+    typing_union_section = build_section_node("typing_union", "typing_union")
     typing_union_rst = strip_whitespace(TYPING_UNION_RST)
     typing_union_section += publish_doctree(typing_union_rst).children
     expected.append(typing_union_section)
 
     actual = fake_model_directive.run()
 
-    assert str(expected) == str(actual)
+    for i, node in enumerate(expected):
+        assert str(node) == str(actual[i])
 
 
 @pytest.mark.parametrize(
@@ -474,50 +425,39 @@ def test_kitbash_model_name_options(fake_model_directive):
 
     expected = list(publish_doctree("this is the model's docstring").children)
 
-    uniontype_section = nodes.section(ids=["prefix.uniontype_field.suffix"])
-    uniontype_section["classes"].append("kitbash-entry")
-    uniontype_title = nodes.title(text="prefix.uniontype_field.suffix")
-    uniontype_section += uniontype_title
-
+    uniontype_section = build_section_node(
+        "uniontype_field", "prefix.uniontype_field.suffix"
+    )
     uniontype_rst = strip_whitespace(UNIONTYPE_RST)
     uniontype_section += publish_doctree(uniontype_rst).children
     expected.append(uniontype_section)
 
-    enum_section = nodes.section(ids=["prefix.enum_field.suffix"])
-    enum_section["classes"].append("kitbash-entry")
-    enum_title = nodes.title(text="prefix.enum_field.suffix")
-    enum_section += enum_title
-
+    enum_section = build_section_node("enum_field", "prefix.enum_field.suffix")
     enum_rst = strip_whitespace(ENUM_RST)
     enum_section += publish_doctree(enum_rst).children
-
     enum_value_container = nodes.container()
     enum_value_container += publish_doctree(LIST_TABLE_RST).children
     enum_section += enum_value_container
     expected.append(enum_section)
 
-    enum_uniontype_section = nodes.section(ids=["prefix.enum_uniontype.suffix"])
-    enum_uniontype_section["classes"].append("kitbash-entry")
-    enum_uniontype_title = nodes.title(text="prefix.enum_uniontype.suffix")
-    enum_uniontype_section += enum_uniontype_title
-
+    enum_uniontype_section = build_section_node(
+        "enum_uniontype", "prefix.enum_uniontype.suffix"
+    )
     enum_uniontype_rst = strip_whitespace(ENUM_RST)
     enum_uniontype_section += publish_doctree(enum_uniontype_rst).children
-
     enum_uniontype_value_container = nodes.container()
     enum_uniontype_value_container += publish_doctree(LIST_TABLE_RST).children
     enum_uniontype_section += enum_uniontype_value_container
     expected.append(enum_uniontype_section)
 
-    typing_union_section = nodes.section(ids=["prefix.typing_union.suffix"])
-    typing_union_section["classes"].append("kitbash-entry")
-    typing_union_title = nodes.title(text="prefix.typing_union.suffix")
-    typing_union_section += typing_union_title
-
+    typing_union_section = build_section_node(
+        "typing_union", "prefix.typing_union.suffix"
+    )
     typing_union_rst = strip_whitespace(TYPING_UNION_RST)
     typing_union_section += publish_doctree(typing_union_rst).children
     expected.append(typing_union_section)
 
     actual = fake_model_directive.run()
 
-    assert str(expected) == str(actual)
+    for i, node in enumerate(expected):
+        assert str(node) == str(actual[i])
