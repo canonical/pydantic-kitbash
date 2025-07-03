@@ -168,9 +168,9 @@ class KitbashFieldDirective(SphinxDirective):
             else ""
         )
 
-        label_text = self.options.get("label", f"{source_file}{field_entry.alias}")
-
-        field_entry.label = nodes.make_id(label_text)
+        field_entry.label = self.options.get(
+            "label", f"{source_file}{field_entry.alias}"
+        )
 
         # Get strings to concatenate with `field_alias`
         name_prefix = self.options.get("prepend-name", "")
@@ -310,11 +310,9 @@ class KitbashModelDirective(SphinxDirective):
                     else ""
                 )
 
-                label_text = self.options.get(
+                field_entry.label = self.options.get(
                     "label", f"{source_file}{field_entry.alias}"
                 )
-
-                field_entry.label = nodes.make_id(label_text)
 
                 # Get strings to concatenate with `field_alias`
                 name_prefix = self.options.get("prepend-name", "")

@@ -178,6 +178,32 @@ def test_kitbash_field(fake_field_directive: FakeFieldDirective):
     assert str(expected) == str(actual)
 
 
+def test_fake(fake_field_directive: FakeFieldDirective):
+    """Test for KitbashFieldDirective."""
+
+    expected = nodes.section(ids=["test"])
+    expected["classes"].append("kitbash-entry")
+
+    field_entry = """\
+
+    .. _label:
+
+    test
+    ----
+
+    this is how Sphinx renders refs.
+
+    """
+
+    field_entry = strip_whitespace(field_entry)
+    expected += publish_doctree(field_entry).children
+    actual = fake_field_directive.run()[0]
+
+    print(f"\n\n{expected}\n\n")
+
+    assert str(expected) == str(actual)
+
+
 @pytest.mark.parametrize(
     ("fake_field_directive", "title_text"),
     [
@@ -308,12 +334,12 @@ def test_kitbash_field_label_option(fake_field_directive: FakeFieldDirective):
 def test_kitbash_field_skip_examples(fake_field_directive: FakeFieldDirective):
     """Test for the skip-examples option in KitbashFieldDirective."""
 
-    expected = nodes.section(ids=["bad-example"])
+    expected = nodes.section(ids=["bad_example"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="bad_example")
     expected += title_node
     target_node = nodes.target()
-    target_node["refid"] = "bad-example"
+    target_node["refid"] = "bad_example"
     expected += target_node
 
     field_entry = """\
@@ -343,12 +369,12 @@ def test_kitbash_field_skip_examples(fake_field_directive: FakeFieldDirective):
 def test_kitbash_field_enum(fake_field_directive: FakeFieldDirective):
     """Test for the KitbashFieldDirective when passed an enum field."""
 
-    expected = nodes.section(ids=["enum-field"])
+    expected = nodes.section(ids=["enum_field"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="enum_field")
     expected += title_node
     target_node = nodes.target()
-    target_node["refid"] = "enum-field"
+    target_node["refid"] = "enum_field"
     expected += target_node
 
     field_entry = """\
@@ -383,12 +409,12 @@ def test_kitbash_field_enum(fake_field_directive: FakeFieldDirective):
 def test_kitbash_field_union_type(fake_field_directive: FakeFieldDirective):
     """Test for the KitbashFieldDirective when passed a types.UnionType field."""
 
-    expected = nodes.section(ids=["uniontype-field"])
+    expected = nodes.section(ids=["uniontype_field"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="uniontype_field")
     expected += title_node
     target_node = nodes.target()
-    target_node["refid"] = "uniontype-field"
+    target_node["refid"] = "uniontype_field"
     expected += target_node
 
     field_entry = """\
@@ -418,12 +444,12 @@ def test_kitbash_field_union_type(fake_field_directive: FakeFieldDirective):
 def test_kitbash_field_enum_union(fake_field_directive: FakeFieldDirective):
     """Test for the KitbashFieldDirective when passed an enum UnionType field."""
 
-    expected = nodes.section(ids=["enum-uniontype"])
+    expected = nodes.section(ids=["enum_uniontype"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="enum_uniontype")
     expected += title_node
     target_node = nodes.target()
-    target_node["refid"] = "enum-uniontype"
+    target_node["refid"] = "enum_uniontype"
     expected += target_node
 
     field_entry = """\
@@ -459,12 +485,12 @@ def test_kitbash_field_enum_union(fake_field_directive: FakeFieldDirective):
 def test_kitbash_field_typing_union(fake_field_directive: FakeFieldDirective):
     """Test for KitbashFieldDirective when passed a typing.Union field."""
 
-    expected = nodes.section(ids=["typing-union"])
+    expected = nodes.section(ids=["typing_union"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="typing_union")
     expected += title_node
     target_node = nodes.target()
-    target_node["refid"] = "typing-union"
+    target_node["refid"] = "typing_union"
     expected += target_node
 
     field_entry = """\
