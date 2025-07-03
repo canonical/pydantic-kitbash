@@ -185,8 +185,9 @@ class KitbashFieldDirective(SphinxDirective):
         )
 
         if state:
+            # Add cross-referencing details to Sphinx's domain data
             self.env.app.env.domaindata["std"]["labels"][field_entry.label] = (
-                self.env.docname,
+                self.env.docname,  # the document currently being parsed
                 field_entry.label,
                 field_entry.alias,
             )
@@ -330,9 +331,10 @@ class KitbashModelDirective(SphinxDirective):
                     else field_entry.alias
                 )
 
+                # Add cross-referencing details to Sphinx's domain data
                 if state:
                     self.env.app.env.domaindata["std"]["labels"][field_entry.label] = (
-                        self.env.docname,
+                        self.env.docname,  # the document currently being parsed
                         field_entry.label,
                         field_entry.alias,
                     )
