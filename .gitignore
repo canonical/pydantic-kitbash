@@ -53,6 +53,9 @@ coverage.xml
 .pytest_cache/
 .results.*.xml
 
+# Integration test output
+.test_output
+
 # Translations
 *.mo
 *.pot

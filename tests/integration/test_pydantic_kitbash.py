@@ -30,7 +30,7 @@ def example_project(request) -> Path:
     # Copy the project into the test's own temporary dir, to avoid clobbering
     # the sources.
     target_dir = Path().resolve() / "example"
-    shutil.copytree(example_dir, target_dir)
+    shutil.copytree(example_dir, target_dir, dirs_exist_ok=True)
 
     return target_dir
 
@@ -43,7 +43,12 @@ def test_pydantic_kitbash_integration(example_project):
     )
 
     index = build_dir / "index.html"
+
+    # Rename the test output to something more meaningful
+    shutil.copytree(build_dir, build_dir.parents[1] / ".test_output")
+
     soup = bs4.BeautifulSoup(index.read_text(), features="lxml")
+    shutil.rmtree(example_project)  # Delete copied source
 
     # Check if field entry was created
     assert soup.find("section", {"class": "kitbash-entry"})
@@ -79,5 +84,3 @@ def test_pydantic_kitbash_integration(example_project):
         getattr(soup.find("span", {"class": "l l-Scalar l-Scalar-Plain"}), "text", None)
         == "val1"
     )
-
-    shutil.rmtree(example_project)
