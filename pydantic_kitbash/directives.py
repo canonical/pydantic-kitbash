@@ -34,7 +34,8 @@ import pydantic
 import yaml
 from docutils import nodes
 from docutils.core import publish_doctree  # type: ignore[reportUnknownVariableType]
-from docutils.parsers.rst import directives
+from docutils.parsers.rst import Parser, directives
+from docutils.utils import new_document
 from pydantic.fields import FieldInfo
 from sphinx.util.docutils import SphinxDirective
 from typing_extensions import override
@@ -50,6 +51,7 @@ class FieldEntry:
     """Contains any field attributes that will be displayed in directive output."""
 
     name: str
+    parent_directive: SphinxDirective
     alias: str
     label: str
     deprecation_warning: str | None
@@ -58,8 +60,9 @@ class FieldEntry:
     enum_values: list[list[str]] | None
     examples: list[str] | None
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, parent_directive: SphinxDirective) -> None:
         self.name = name
+        self.parent_directive = parent_directive
         self.alias = name
         self.label = name
         self.deprecation_warning = None
@@ -112,7 +115,7 @@ class KitbashFieldDirective(SphinxDirective):
         if self.arguments[1] not in pydantic_class.__annotations__:
             raise ValueError(f"Could not find field: {self.arguments[1]}")
 
-        field_entry = FieldEntry(self.arguments[1])
+        field_entry = FieldEntry(self.arguments[1], self)
 
         # grab pydantic field data
         field_params = pydantic_class.model_fields[field_entry.name]
@@ -220,9 +223,6 @@ class KitbashModelDirective(SphinxDirective):
         to produce a formatted output in accordance with Starcraft's YAML key
         documentation standard.
 
-        Args:
-            self: Object containing the directive's state.
-
         Returns:
             list[nodes.Node]: Well-formed list of nodes to render into field entries.
 
@@ -238,9 +238,9 @@ class KitbashModelDirective(SphinxDirective):
 
         # User-provided description overrides model docstring
         if self.content:
-            class_node += parse_rst_description("\n".join(self.content))
+            class_node += parse_rst_description("\n".join(self.content), self)
         elif pydantic_class.__doc__ and "skip-description" not in self.options:
-            class_node += parse_rst_description(pydantic_class.__doc__)
+            class_node += parse_rst_description(pydantic_class.__doc__, self)
 
         # Check if user provided a list of deprecated fields to include
         include_deprecated = [
@@ -263,7 +263,7 @@ class KitbashModelDirective(SphinxDirective):
                 # grab pydantic field data (need desc and examples)
                 field_params = pydantic_class.model_fields[field]
 
-                field_entry = FieldEntry(field)
+                field_entry = FieldEntry(field, self)
                 field_entry.deprecation_warning = deprecation_warning
 
                 field_entry.alias = (
@@ -355,7 +355,6 @@ def get_optional_field_data(field_entry: FieldEntry, annotation: type[Any]) -> N
 
     Args:
         field_entry (FieldEntry): Object containing field data.
-
         annotation (type[Any]): Type annotation of the optional field. This field
             may be either a standard Python type or an optional enum.
 
@@ -381,7 +380,6 @@ def get_optional_annotated_field_data(
 
     Args:
         field_entry (FieldEntry): Object containing field data.
-
         annotation (type[Any]): Annotation of an optional annotated type field.
 
     Returns:
@@ -411,7 +409,6 @@ def get_enum_field_data(field_entry: FieldEntry, annotation: type[Any] | None) -
 
     Args:
         field_entry (FieldEntry): Object containing field data.
-
         annotation (type[Any]): Annotation for an enum field. This does not include
             optional enum fields, which are handled by `get_optional_field_data`.
 
@@ -524,7 +521,9 @@ def create_field_node(field_entry: FieldEntry) -> nodes.section:
 
     if field_entry.deprecation_warning:
         deprecated_node = nodes.important()
-        deprecated_node += parse_rst_description(field_entry.deprecation_warning)
+        deprecated_node += parse_rst_description(
+            field_entry.deprecation_warning, field_entry.parent_directive
+        )
         field_node += deprecated_node
 
     if field_entry.field_type:
@@ -547,13 +546,17 @@ def create_field_node(field_entry: FieldEntry) -> nodes.section:
         desc_header = nodes.paragraph()
         desc_header += nodes.strong(text="Description")
         field_node += desc_header
-        field_node += parse_rst_description(field_entry.description)
+        field_node += parse_rst_description(
+            field_entry.description, field_entry.parent_directive
+        )
 
     if field_entry.enum_values:
         values_header = nodes.paragraph()
         values_header += nodes.strong(text="Values")
         field_node += values_header
-        field_node += create_table_node(field_entry.enum_values)
+        field_node += create_table_node(
+            field_entry.enum_values, field_entry.parent_directive
+        )
 
     if field_entry.examples:
         examples_header = nodes.paragraph()
@@ -603,13 +606,16 @@ def build_examples_block(field_name: str, example: str) -> nodes.literal_block:
     return examples_block
 
 
-def create_table_node(values: list[list[str]]) -> nodes.container:
+def create_table_node(
+    values: list[list[str]], parent_directive: SphinxDirective
+) -> nodes.container:
     """Create docutils table node.
 
     Creates a container node containing a properly formatted table node.
 
     Args:
         values (list[list[str]]): A list of value-description pairs.
+        parent_directive(SphinxDirective): The directive that outputs the returned nodes.
 
     Returns:
         nodes.container: A `div` containing a well-formed docutils table.
@@ -643,12 +649,12 @@ def create_table_node(values: list[list[str]]) -> nodes.container:
     tgroup += tbody
 
     for row in values:
-        tbody += create_table_row(row)
+        tbody += create_table_row(row, parent_directive)
 
     return div_node
 
 
-def create_table_row(values: list[str]) -> nodes.row:
+def create_table_row(values: list[str], parent_directive: SphinxDirective) -> nodes.row:
     """Create well-formed docutils table row.
 
     Creates a well-structured docutils table row from
@@ -656,6 +662,7 @@ def create_table_row(values: list[str]) -> nodes.row:
 
     Args:
         values (list[str]): A list containing a value and description.
+        parent_directive(SphinxDirective): The directive that outputs the returned nodes.
 
     Returns:
         nodes.row: A table row consisting of the provided value and description.
@@ -670,7 +677,7 @@ def create_table_row(values: list[str]) -> nodes.row:
     row += value_entry
 
     desc_entry = nodes.entry()
-    desc_entry += parse_rst_description(values[1])
+    desc_entry += parse_rst_description(values[1], parent_directive)
     row += desc_entry
 
     return row
@@ -708,7 +715,7 @@ def get_annotation_docstring(cls: type[object], annotation_name: str) -> str | N
         ):
             found = True
 
-    return docstring
+    return cast(str, docstring)
 
 
 def get_enum_member_docstring(cls: type[object], enum_member: str) -> str | None:
@@ -769,20 +776,29 @@ def get_enum_values(enum_class: type[object]) -> list[list[str]]:
     return enum_docstrings
 
 
-def parse_rst_description(rst_desc: str) -> list[nodes.Node]:
+def parse_rst_description(
+    rst_desc: str, directive: SphinxDirective
+) -> list[nodes.Node]:
     """Parse rST from model and field docstrings.
 
     Creates a reStructuredText document node from the given string so that
     the document's child nodes can be appended to the directive's output.
+    This method requires the parent_directive to enable cross-references,
+    which cannot be resolved without a reference to the parent doctree.
 
     Args:
         rst_desc (str): string containing reStructuredText
+        directive (SphinxDirective): The directive that outputs the returned nodes.
 
     Returns:
         list[Node]: the docutils nodes produced by the rST
 
     """
-    rst_doc = cast(nodes.document, publish_doctree(strip_whitespace(rst_desc)))
+    settings = directive.state.document.settings
+    rst_doc = new_document(directive.env.docname, settings=settings)
+
+    rst_parser = Parser()
+    rst_parser.parse(strip_whitespace(rst_desc), rst_doc)
 
     return list(rst_doc.children)
 
