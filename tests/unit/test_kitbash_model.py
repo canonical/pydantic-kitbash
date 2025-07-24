@@ -15,15 +15,13 @@
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import enum
-from typing import Annotated, Any
+from typing import Annotated
 
 import pydantic
 import pytest
 from docutils import nodes
 from docutils.core import publish_doctree
-from docutils.statemachine import StringList
-from pydantic_kitbash.directives import KitbashModelDirective, strip_whitespace
-from typing_extensions import override
+from pydantic_kitbash.directives import strip_whitespace
 
 MOCK_FIELD_RST = """\
 
@@ -132,71 +130,6 @@ class MockEnum(enum.Enum):
     """The second value."""
 
 
-class MockModel(pydantic.BaseModel):
-    """this is the model's docstring"""
-
-    mock_field: int = pydantic.Field(
-        description="description",
-        alias="test",
-        deprecated="ew.",
-    )
-    uniontype_field: str | None = pydantic.Field(
-        description="This is types.UnionType",
-    )
-    enum_field: MockEnum
-    enum_uniontype: MockEnum | None
-    typing_union: TEST_TYPE | None
-
-
-class OopsNoModel:
-    field1: int
-
-
-class FakeModelDirective(KitbashModelDirective):
-    """An override for testing only our additions."""
-
-    @override
-    def __init__(
-        self,
-        name: str,
-        arguments: list[str],
-        options: dict[str, Any],
-        content: StringList,
-    ):
-        self.name = name
-        self.arguments = arguments
-        self.options = options
-        self.content = content
-
-
-@pytest.fixture
-def fake_model_directive(request: pytest.FixtureRequest) -> FakeModelDirective:
-    """This fixture can be parametrized to override the default values.
-
-    Most parameters are 1:1 with the init function of FakeModelDirective, but
-    there is one exception - the "model_field" key can be used as a shorthand
-    to more easily select a field on the MockModel in this file instead of
-    passing a fully qualified module name.
-    """
-    # Get any optional overrides from the fixtures
-    overrides = request.param if hasattr(request, "param") else {}
-
-    # Handle the model_field shorthand
-    if value := overrides.get("model"):
-        arguments = [fake_model_directive.__module__ + value]
-    elif value := overrides.get("arguments"):
-        arguments = value
-    else:
-        arguments = [fake_model_directive.__module__ + ".MockModel"]
-
-    return FakeModelDirective(
-        name=overrides.get("name", "kitbash-model"),
-        arguments=arguments,
-        options=overrides.get("options", {}),
-        content=overrides.get("content", []),
-    )
-
-
 def build_section_node(node_id: str, title: str) -> nodes.section:
     """Create a section node containing all of the information for a single field.
 
@@ -232,7 +165,7 @@ def test_kitbash_model_invalid(fake_model_directive):
 def test_kitbash_model(fake_model_directive):
     """Test for the KitbashModelDirective."""
 
-    expected = list(publish_doctree(MockModel.__doc__).children)
+    expected = list(publish_doctree("this is the model's docstring").children)
 
     uniontype_section = build_section_node("uniontype_field", "uniontype_field")
     uniontype_rst = strip_whitespace(UNIONTYPE_RST)

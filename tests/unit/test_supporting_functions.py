@@ -220,7 +220,7 @@ def test_is_enum_type_false():
     assert not is_enum_type(Model.model_fields["field"].annotation)
 
 
-def test_create_field_node():
+def test_create_field_node(fake_field_directive):
     """Test for create_field_node."""
 
     # need to set up section node manually
@@ -233,7 +233,7 @@ def test_create_field_node():
     expected += target_node
     expected += publish_doctree(KEY_ENTRY_RST).children
 
-    test_entry = FieldEntry("key-name")
+    test_entry = FieldEntry("key-name", fake_field_directive)
     test_entry.alias = "key-name"
     test_entry.label = "key-name"
     test_entry.deprecation_warning = "Don't use this."
@@ -248,7 +248,7 @@ def test_create_field_node():
     assert str(expected) == str(actual)
 
 
-def test_create_field_node_literal_list():
+def test_create_field_node_literal_list(fake_field_directive):
     """Test for create_field_node with a FieldEntry of type Literal[]."""
 
     # need to set up section node manually
@@ -261,7 +261,7 @@ def test_create_field_node_literal_list():
     expected += target_node
     expected += publish_doctree(LITERAL_LIST_ENTRY_RST).children
 
-    test_entry = FieldEntry("key-name")
+    test_entry = FieldEntry("key-name", fake_field_directive)
     test_entry.alias = "key-name"
     test_entry.label = "key-name"
     test_entry.deprecation_warning = "Don't use this."
@@ -272,7 +272,7 @@ def test_create_field_node_literal_list():
     assert str(expected) == str(actual)
 
 
-def test_create_minimal_field_node():
+def test_create_minimal_field_node(fake_field_directive):
     """Test for create_field_node with a minimal set of attributes."""
 
     # need to set up section node manually
@@ -284,7 +284,7 @@ def test_create_minimal_field_node():
     target_node["refid"] = "key-name"
     expected += target_node
 
-    test_entry = FieldEntry("key-name")
+    test_entry = FieldEntry("key-name", fake_field_directive)
 
     actual = create_field_node(test_entry)
 
@@ -336,13 +336,13 @@ def test_build_invalid_examples_block():
     assert str(expected) == str(actual)
 
 
-def test_create_table_node():
+def test_create_table_node(fake_field_directive):
     """Test for create_table_node."""
 
     expected = nodes.container()
     expected += publish_doctree(TABLE_RST).children
 
-    actual = create_table_node([["1.1", "1.2"], ["2.1", "2.2"]])
+    actual = create_table_node([["1.1", "1.2"], ["2.1", "2.2"]], fake_field_directive)
 
     # comparing strings because docutils `__eq__`
     # method compares by identity rather than state
@@ -395,13 +395,13 @@ def test_get_enum_values():
     ]
 
 
-def test_parse_rst_description():
+def test_parse_rst_description(fake_field_directive):
     """Test parse_rst_description."""
 
     # use docutils to build rST like Sphinx would
     expected = publish_doctree(RST_SAMPLE).children
     # function output
-    actual = parse_rst_description(RST_SAMPLE)
+    actual = parse_rst_description(RST_SAMPLE, fake_field_directive)
 
     # comparing strings because docutils `__eq__`
     # method compares by identity rather than state
@@ -455,7 +455,7 @@ def test_format_type_string():
     assert format_type_string(list_type) == "Literal['val1', 'val2', 'val3']"
 
 
-def test_get_optional_annotated_field_data_no_annotation():
+def test_get_optional_annotated_field_data_no_annotation(fake_field_directive):
     """\
     Test for get_optional_annotated_field_data when the first arg has no
     annotation.
@@ -469,7 +469,7 @@ def test_get_optional_annotated_field_data_no_annotation():
 
     annotation = MockModel.model_fields["field1"].annotation
 
-    entry = FieldEntry("nom")
+    entry = FieldEntry("nom", fake_field_directive)
     get_optional_annotated_field_data(entry, annotation)
     print(entry.field_type)
 
@@ -479,15 +479,15 @@ def test_get_optional_annotated_field_data_no_annotation():
     assert entry.examples is None
 
 
-def test_get_optional_annotated_field_data_none():
+def test_get_optional_annotated_field_data_none(fake_field_directive):
     """Test for get_optional_annotated_field_data when no field is provided."""
 
-    entry = FieldEntry("nice try")
+    entry = FieldEntry("nice try", fake_field_directive)
     assert get_optional_annotated_field_data(entry, None) is None
 
 
-def test_get_enum_field_data_none():
+def test_get_enum_field_data_none(fake_field_directive):
     """Test for get_enum_field_data when no annotation is provided."""
 
-    entry = FieldEntry("nice try")
+    entry = FieldEntry("nice try", fake_field_directive)
     assert get_enum_field_data(entry, None) is None
