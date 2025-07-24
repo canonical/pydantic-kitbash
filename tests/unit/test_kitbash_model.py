@@ -130,7 +130,7 @@ class MockEnum(enum.Enum):
     """The second value."""
 
 
-def build_section_node(node_id: str, title: str) -> nodes.section:
+def build_section_node(title: str, node_id: str) -> nodes.section:
     """Create a section node containing all of the information for a single field.
 
     Args:
@@ -167,12 +167,12 @@ def test_kitbash_model(fake_model_directive):
 
     expected = list(publish_doctree("this is the model's docstring").children)
 
-    uniontype_section = build_section_node("uniontype_field", "uniontype_field")
+    uniontype_section = build_section_node("uniontype_field", "docname-uniontype_field")
     uniontype_rst = strip_whitespace(UNIONTYPE_RST)
     uniontype_section += publish_doctree(uniontype_rst).children
     expected.append(uniontype_section)
 
-    enum_section = build_section_node("enum_field", "enum_field")
+    enum_section = build_section_node("enum_field", "docname-enum_field")
     enum_rst = strip_whitespace(ENUM_RST)
     enum_section += publish_doctree(enum_rst).children
     enum_value_container = nodes.container()
@@ -180,7 +180,9 @@ def test_kitbash_model(fake_model_directive):
     enum_section += enum_value_container
     expected.append(enum_section)
 
-    enum_uniontype_section = build_section_node("enum_uniontype", "enum_uniontype")
+    enum_uniontype_section = build_section_node(
+        "enum_uniontype", "docname-enum_uniontype"
+    )
     enum_uniontype_rst = strip_whitespace(ENUM_RST)
     enum_uniontype_section += publish_doctree(enum_uniontype_rst).children
     enum_uniontype_value_container = nodes.container()
@@ -188,7 +190,7 @@ def test_kitbash_model(fake_model_directive):
     enum_uniontype_section += enum_uniontype_value_container
     expected.append(enum_uniontype_section)
 
-    typing_union_section = build_section_node("typing_union", "typing_union")
+    typing_union_section = build_section_node("typing_union", "docname-typing_union")
     typing_union_rst = strip_whitespace(TYPING_UNION_RST)
     typing_union_section += publish_doctree(typing_union_rst).children
     expected.append(typing_union_section)
@@ -215,12 +217,12 @@ def test_kitbash_model_skip_description(fake_model_directive):
 
     expected = []
 
-    uniontype_section = build_section_node("uniontype_field", "uniontype_field")
+    uniontype_section = build_section_node("uniontype_field", "docname-uniontype_field")
     uniontype_rst = strip_whitespace(UNIONTYPE_RST)
     uniontype_section += publish_doctree(uniontype_rst).children
     expected.append(uniontype_section)
 
-    enum_section = build_section_node("enum_field", "enum_field")
+    enum_section = build_section_node("enum_field", "docname-enum_field")
     enum_rst = strip_whitespace(ENUM_RST)
     enum_section += publish_doctree(enum_rst).children
     enum_value_container = nodes.container()
@@ -228,7 +230,9 @@ def test_kitbash_model_skip_description(fake_model_directive):
     enum_section += enum_value_container
     expected.append(enum_section)
 
-    enum_uniontype_section = build_section_node("enum_uniontype", "enum_uniontype")
+    enum_uniontype_section = build_section_node(
+        "enum_uniontype", "docname-enum_uniontype"
+    )
     enum_uniontype_rst = strip_whitespace(ENUM_RST)
     enum_uniontype_section += publish_doctree(enum_uniontype_rst).children
 
@@ -237,7 +241,7 @@ def test_kitbash_model_skip_description(fake_model_directive):
     enum_uniontype_section += enum_uniontype_value_container
     expected.append(enum_uniontype_section)
 
-    typing_union_section = build_section_node("typing_union", "typing_union")
+    typing_union_section = build_section_node("typing_union", "docname-typing_union")
     typing_union_rst = strip_whitespace(TYPING_UNION_RST)
     typing_union_section += publish_doctree(typing_union_rst).children
     expected.append(typing_union_section)
@@ -256,12 +260,12 @@ def test_kitbash_model_content(fake_model_directive):
 
     expected = list(publish_doctree("``Test content``").children)
 
-    uniontype_section = build_section_node("uniontype_field", "uniontype_field")
+    uniontype_section = build_section_node("uniontype_field", "docname-uniontype_field")
     uniontype_rst = strip_whitespace(UNIONTYPE_RST)
     uniontype_section += publish_doctree(uniontype_rst).children
     expected.append(uniontype_section)
 
-    enum_section = build_section_node("enum_field", "enum_field")
+    enum_section = build_section_node("enum_field", "docname-enum_field")
     enum_rst = strip_whitespace(ENUM_RST)
     enum_section += publish_doctree(enum_rst).children
     enum_value_container = nodes.container()
@@ -269,7 +273,9 @@ def test_kitbash_model_content(fake_model_directive):
     enum_section += enum_value_container
     expected.append(enum_section)
 
-    enum_uniontype_section = build_section_node("enum_uniontype", "enum_uniontype")
+    enum_uniontype_section = build_section_node(
+        "enum_uniontype", "docname-enum_uniontype"
+    )
     enum_uniontype_rst = strip_whitespace(ENUM_RST)
     enum_uniontype_section += publish_doctree(enum_uniontype_rst).children
     enum_uniontype_value_container = nodes.container()
@@ -277,7 +283,7 @@ def test_kitbash_model_content(fake_model_directive):
     enum_uniontype_section += enum_uniontype_value_container
     expected.append(enum_uniontype_section)
 
-    typing_union_section = build_section_node("typing_union", "typing_union")
+    typing_union_section = build_section_node("typing_union", "docname-typing_union")
     typing_union_rst = strip_whitespace(TYPING_UNION_RST)
     typing_union_section += publish_doctree(typing_union_rst).children
     expected.append(typing_union_section)
@@ -304,17 +310,17 @@ def test_kitbash_model_include_deprecated(fake_model_directive):
 
     expected = list(publish_doctree("this is the model's docstring").children)
 
-    mock_field_section = build_section_node("test", "test")
+    mock_field_section = build_section_node("test", "docname-test")
     mock_field_rst = strip_whitespace(MOCK_FIELD_RST)
     mock_field_section += publish_doctree(mock_field_rst).children
     expected.append(mock_field_section)
 
-    uniontype_section = build_section_node("uniontype_field", "uniontype_field")
+    uniontype_section = build_section_node("uniontype_field", "docname-uniontype_field")
     uniontype_rst = strip_whitespace(UNIONTYPE_RST)
     uniontype_section += publish_doctree(uniontype_rst).children
     expected.append(uniontype_section)
 
-    enum_section = build_section_node("enum_field", "enum_field")
+    enum_section = build_section_node("enum_field", "docname-enum_field")
     enum_rst = strip_whitespace(ENUM_RST)
     enum_section += publish_doctree(enum_rst).children
     enum_value_container = nodes.container()
@@ -322,7 +328,9 @@ def test_kitbash_model_include_deprecated(fake_model_directive):
     enum_section += enum_value_container
     expected.append(enum_section)
 
-    enum_uniontype_section = build_section_node("enum_uniontype", "enum_uniontype")
+    enum_uniontype_section = build_section_node(
+        "enum_uniontype", "docname-enum_uniontype"
+    )
     enum_uniontype_rst = strip_whitespace(ENUM_RST)
     enum_uniontype_section += publish_doctree(enum_uniontype_rst).children
     enum_uniontype_value_container = nodes.container()
@@ -330,7 +338,7 @@ def test_kitbash_model_include_deprecated(fake_model_directive):
     enum_uniontype_section += enum_uniontype_value_container
     expected.append(enum_uniontype_section)
 
-    typing_union_section = build_section_node("typing_union", "typing_union")
+    typing_union_section = build_section_node("typing_union", "docname-typing_union")
     typing_union_rst = strip_whitespace(TYPING_UNION_RST)
     typing_union_section += publish_doctree(typing_union_rst).children
     expected.append(typing_union_section)
@@ -359,13 +367,13 @@ def test_kitbash_model_name_options(fake_model_directive):
     expected = list(publish_doctree("this is the model's docstring").children)
 
     uniontype_section = build_section_node(
-        "uniontype_field", "prefix.uniontype_field.suffix"
+        "prefix.uniontype_field.suffix", "docname-uniontype_field"
     )
     uniontype_rst = strip_whitespace(UNIONTYPE_RST)
     uniontype_section += publish_doctree(uniontype_rst).children
     expected.append(uniontype_section)
 
-    enum_section = build_section_node("enum_field", "prefix.enum_field.suffix")
+    enum_section = build_section_node("prefix.enum_field.suffix", "docname-enum_field")
     enum_rst = strip_whitespace(ENUM_RST)
     enum_section += publish_doctree(enum_rst).children
     enum_value_container = nodes.container()
@@ -374,7 +382,7 @@ def test_kitbash_model_name_options(fake_model_directive):
     expected.append(enum_section)
 
     enum_uniontype_section = build_section_node(
-        "enum_uniontype", "prefix.enum_uniontype.suffix"
+        "prefix.enum_uniontype.suffix", "docname-enum_uniontype"
     )
     enum_uniontype_rst = strip_whitespace(ENUM_RST)
     enum_uniontype_section += publish_doctree(enum_uniontype_rst).children
@@ -384,7 +392,7 @@ def test_kitbash_model_name_options(fake_model_directive):
     expected.append(enum_uniontype_section)
 
     typing_union_section = build_section_node(
-        "typing_union", "prefix.typing_union.suffix"
+        "prefix.typing_union.suffix", "docname-typing_union"
     )
     typing_union_rst = strip_whitespace(TYPING_UNION_RST)
     typing_union_section += publish_doctree(typing_union_rst).children

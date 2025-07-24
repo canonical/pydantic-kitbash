@@ -471,7 +471,6 @@ def test_get_optional_annotated_field_data_no_annotation(fake_field_directive):
 
     entry = FieldEntry("nom", fake_field_directive)
     get_optional_annotated_field_data(entry, annotation)
-    print(entry.field_type)
 
     assert entry.name == "nom"
     assert entry.field_type is None

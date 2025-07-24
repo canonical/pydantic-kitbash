@@ -794,13 +794,10 @@ def parse_rst_description(
         list[Node]: the docutils nodes produced by the rST
 
     """
-    if hasattr(directive, "state") and hasattr(directive, "env"):
-        settings = directive.state.document.settings
-        rst_doc = new_document(directive.env.docname, settings=settings)
-        rst_parser = Parser()
-        rst_parser.parse(strip_whitespace(rst_desc), rst_doc)
-    else:
-        rst_doc = cast(nodes.document, publish_doctree(strip_whitespace(rst_desc)))
+    settings = directive.state.document.settings
+    rst_doc = new_document(directive.env.docname, settings=settings)
+    rst_parser = Parser()
+    rst_parser.parse(strip_whitespace(rst_desc), rst_doc)
 
     return list(rst_doc.children)
 

@@ -1,11 +1,36 @@
+# This file is part of pydantic-kitbash.
+#
+# Copyright 2025 Canonical Ltd.
+#
+# This program is free software: you can redistribute it and/or modify it under the
+# terms of the GNU Lesser General Public License version 3, as published by the Free
+# Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranties of MERCHANTABILITY, SATISFACTORY
+# QUALITY, or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+# License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License along with
+# this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import enum
+from pathlib import Path
 from typing import Annotated, Any
 
 import pydantic
 import pytest
+from docutils.frontend import get_default_settings
+from docutils.parsers.rst import Parser
+from docutils.parsers.rst.states import RSTState, RSTStateMachine
 from docutils.statemachine import StringList
+from docutils.utils import new_document
 from pydantic_kitbash.directives import KitbashFieldDirective, KitbashModelDirective
+from sphinx.environment import BuildEnvironment
+from sphinx.testing.util import SphinxTestApp
 from typing_extensions import override
+
+### Directive fixtures ###
 
 
 class FakeFieldDirective(KitbashFieldDirective):
@@ -18,15 +43,19 @@ class FakeFieldDirective(KitbashFieldDirective):
         arguments: list[str],
         options: dict[str, Any],
         content: StringList,
+        env_root: Path,
     ):
         self.name = name
         self.arguments = arguments
         self.options = options
         self.content = content
+        self.state = mock_state(env_root)
 
 
 @pytest.fixture
-def fake_field_directive(request: pytest.FixtureRequest) -> FakeFieldDirective:
+def fake_field_directive(
+    request: pytest.FixtureRequest, tmp_path
+) -> FakeFieldDirective:
     """This fixture can be parametrized to override the default values.
 
     Most parameters are 1:1 with the init function of FakeFieldDirective, but
@@ -50,6 +79,7 @@ def fake_field_directive(request: pytest.FixtureRequest) -> FakeFieldDirective:
         arguments=arguments,
         options=overrides.get("options", {}),
         content=overrides.get("content", []),
+        env_root=tmp_path,
     )
 
 
@@ -63,15 +93,19 @@ class FakeModelDirective(KitbashModelDirective):
         arguments: list[str],
         options: dict[str, Any],
         content: StringList,
+        env_root: Path,
     ):
         self.name = name
         self.arguments = arguments
         self.options = options
         self.content = content
+        self.state = mock_state(env_root)
 
 
 @pytest.fixture
-def fake_model_directive(request: pytest.FixtureRequest) -> FakeModelDirective:
+def fake_model_directive(
+    request: pytest.FixtureRequest, tmp_path
+) -> FakeModelDirective:
     """This fixture can be parametrized to override the default values.
 
     Most parameters are 1:1 with the init function of FakeModelDirective, but
@@ -95,7 +129,37 @@ def fake_model_directive(request: pytest.FixtureRequest) -> FakeModelDirective:
         arguments=arguments,
         options=overrides.get("options", {}),
         content=overrides.get("content", []),
+        env_root=tmp_path,
     )
+
+
+### Mock Sphinx application instance ###
+
+
+def mock_state(tmp_path) -> RSTState:
+    state_machine = RSTStateMachine([], "")
+    state = RSTState(state_machine)
+    document = new_document("docname", settings=get_default_settings(Parser))
+
+    src_dir = tmp_path / "src"
+
+    src_dir.mkdir(parents=True, exist_ok=True)
+    (src_dir / "conf.py").write_text("project = 'mock'")
+    (src_dir / "index.rst").write_text("index\n=====")
+
+    test_app = SphinxTestApp(srcdir=src_dir)
+    test_app.build()
+
+    build_env = BuildEnvironment(test_app)
+    build_env.temp_data["docname"] = "index"
+
+    document.settings.env = build_env
+    state.document = document
+
+    return state
+
+
+### Models and types for test input ###
 
 
 def validator(
