@@ -33,7 +33,6 @@ from typing import Any, Literal, Union, cast, get_args, get_origin
 import pydantic
 import yaml
 from docutils import nodes
-from docutils.core import publish_doctree  # type: ignore[reportUnknownVariableType]
 from docutils.parsers.rst import Parser, directives
 from docutils.utils import new_document
 from pydantic.fields import FieldInfo
@@ -607,7 +606,7 @@ def build_examples_block(field_name: str, example: str) -> nodes.literal_block:
 
 
 def create_table_node(
-    values: list[list[str]], parent_directive: SphinxDirective
+    values: list[list[str]], directive: SphinxDirective
 ) -> nodes.container:
     """Create docutils table node.
 
@@ -615,7 +614,7 @@ def create_table_node(
 
     Args:
         values (list[list[str]]): A list of value-description pairs.
-        parent_directive(SphinxDirective): The directive that outputs the returned nodes.
+        directive(SphinxDirective): The directive that outputs the returned nodes.
 
     Returns:
         nodes.container: A `div` containing a well-formed docutils table.
@@ -649,12 +648,12 @@ def create_table_node(
     tgroup += tbody
 
     for row in values:
-        tbody += create_table_row(row, parent_directive)
+        tbody += create_table_row(row, directive)
 
     return div_node
 
 
-def create_table_row(values: list[str], parent_directive: SphinxDirective) -> nodes.row:
+def create_table_row(values: list[str], directive: SphinxDirective) -> nodes.row:
     """Create well-formed docutils table row.
 
     Creates a well-structured docutils table row from
@@ -662,7 +661,7 @@ def create_table_row(values: list[str], parent_directive: SphinxDirective) -> no
 
     Args:
         values (list[str]): A list containing a value and description.
-        parent_directive(SphinxDirective): The directive that outputs the returned nodes.
+        directive(SphinxDirective): The directive that outputs the returned nodes.
 
     Returns:
         nodes.row: A table row consisting of the provided value and description.
@@ -677,7 +676,7 @@ def create_table_row(values: list[str], parent_directive: SphinxDirective) -> no
     row += value_entry
 
     desc_entry = nodes.entry()
-    desc_entry += parse_rst_description(values[1], parent_directive)
+    desc_entry += parse_rst_description(values[1], directive)
     row += desc_entry
 
     return row
@@ -707,7 +706,7 @@ def get_annotation_docstring(cls: type[object], annotation_name: str) -> str | N
     for node in ast.walk(tree):
         if found:
             if isinstance(node, ast.Expr):
-                docstring = cast(ast.Constant, node.value).value
+                docstring = str(cast(ast.Constant, node.value).value)
             break
         if (
             isinstance(node, ast.AnnAssign)
@@ -715,7 +714,7 @@ def get_annotation_docstring(cls: type[object], annotation_name: str) -> str | N
         ):
             found = True
 
-    return cast(str, docstring)
+    return docstring
 
 
 def get_enum_member_docstring(cls: type[object], enum_member: str) -> str | None:
@@ -783,7 +782,7 @@ def parse_rst_description(
 
     Creates a reStructuredText document node from the given string so that
     the document's child nodes can be appended to the directive's output.
-    This method requires the parent_directive to enable cross-references,
+    This function requires the calling directive to enable cross-references,
     which cannot be resolved without a reference to the parent doctree.
 
     Args:
