@@ -23,3 +23,10 @@ Fields
     :hidden:
 
     the-other-file
+
+
+.. Test with py:module set
+
+.. py:currentmodule:: example.project
+
+.. kitbash-field:: MockModel mock_field

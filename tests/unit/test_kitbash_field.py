@@ -14,10 +14,6 @@
 # You should have received a copy of the GNU Lesser General Public License along with
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import enum
-from typing import Annotated
-
-import pydantic
 import pytest
 from docutils import nodes
 from docutils.core import publish_doctree
@@ -53,8 +49,43 @@ def test_kitbash_field_invalid(fake_field_directive):
 def test_kitbash_field(fake_field_directive):
     """Test for KitbashFieldDirective."""
 
-    # The IDs are duplicated because the test directives have no state.
-    # In actual usage, the second ID will always be prefixed with the filename.
+    expected = nodes.section(ids=["test", "docname-test"])
+    expected["classes"].append("kitbash-entry")
+    title_node = nodes.title(text="test")
+    expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "docname-test"
+    expected += target_node
+
+    field_entry = """\
+
+    .. important::
+
+        Deprecated. ew.
+
+    **Type**
+
+    ``int``
+
+    **Description**
+
+    description
+
+    """
+
+    field_entry = strip_whitespace(field_entry)
+    expected += publish_doctree(field_entry).children
+    actual = fake_field_directive.run()[0]
+
+    assert str(expected) == str(actual)
+
+
+def test_kitbash_field_py_module(fake_field_directive):
+    """Test for KitbashFieldDirective."""
+    fake_field_directive.env.ref_context["py:module"] = fake_field_directive.__module__
+    fake_field_directive.arguments[0] = "MockFieldModel"
+    fake_field_directive.arguments[1] = "mock_field"
+
     expected = nodes.section(ids=["test", "docname-test"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="test")
