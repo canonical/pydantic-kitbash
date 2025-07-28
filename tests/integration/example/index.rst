@@ -19,14 +19,14 @@ Fields
 
 .. kitbash-field:: example.project.MockModel xref_docstring_test
 
-.. toctree::
-    :hidden:
-
-    the-other-file
-
-
 .. Test with py:module set
 
 .. py:currentmodule:: example.project
 
 .. kitbash-field:: MockModel mock_field
+
+
+.. toctree::
+    :hidden:
+
+    the-other-file
