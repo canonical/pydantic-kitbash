@@ -166,13 +166,7 @@ class KitbashFieldDirective(SphinxDirective):
             None if "skip-examples" in self.options else field_entry.examples
         )
 
-        state = getattr(self, "state", None)
-
-        source_file = (
-            f"{state.document['source'].rsplit('/', maxsplit=1)[-1].removesuffix('.rst')}-"
-            if state
-            else ""
-        )
+        source_file = f"{self.state.document['source'].rsplit('/', maxsplit=1)[-1].removesuffix('.rst')}-"
 
         field_entry.label = self.options.get(
             "label", f"{source_file}{field_entry.alias}"
@@ -190,17 +184,16 @@ class KitbashFieldDirective(SphinxDirective):
             f"{field_entry.alias}.{name_suffix}" if name_suffix else field_entry.alias
         )
 
-        if state:
-            # Add cross-referencing details to Sphinx's domain data
-            self.env.app.env.domaindata["std"]["labels"][field_entry.label] = (
-                self.env.docname,  # the document currently being parsed
-                field_entry.label,
-                field_entry.alias,
-            )
-            self.env.app.env.domaindata["std"]["anonlabels"][field_entry.label] = (
-                self.env.docname,
-                field_entry.label,
-            )
+        # Add cross-referencing details to Sphinx's domain data
+        self.env.app.env.domaindata["std"]["labels"][field_entry.label] = (
+            self.env.docname,  # the document currently being parsed
+            field_entry.label,
+            field_entry.alias,
+        )
+        self.env.app.env.domaindata["std"]["anonlabels"][field_entry.label] = (
+            self.env.docname,
+            field_entry.label,
+        )
 
         return [create_field_node(field_entry)]
 
@@ -310,13 +303,7 @@ class KitbashModelDirective(SphinxDirective):
                 elif is_enum_type(field_params.annotation):
                     get_enum_field_data(field_entry, field_params.annotation)
 
-                state = getattr(self, "state", None)
-
-                source_file = (
-                    f"{state.document['source'].rsplit('/', maxsplit=1)[-1].removesuffix('.rst')}-"
-                    if state
-                    else ""
-                )
+                source_file = f"{self.state.document['source'].rsplit('/', maxsplit=1)[-1].removesuffix('.rst')}-"
 
                 field_entry.label = self.options.get(
                     "label", f"{source_file}{field_entry.alias}"
@@ -339,18 +326,15 @@ class KitbashModelDirective(SphinxDirective):
                 )
 
                 # Add cross-referencing details to Sphinx's domain data
-                if state:
-                    self.env.app.env.domaindata["std"]["labels"][field_entry.label] = (
-                        self.env.docname,  # the document currently being parsed
-                        field_entry.label,
-                        field_entry.alias,
-                    )
-                    self.env.app.env.domaindata["std"]["anonlabels"][
-                        field_entry.label
-                    ] = (
-                        self.env.docname,
-                        field_entry.label,
-                    )
+                self.env.app.env.domaindata["std"]["labels"][field_entry.label] = (
+                    self.env.docname,  # the document currently being parsed
+                    field_entry.label,
+                    field_entry.alias,
+                )
+                self.env.app.env.domaindata["std"]["anonlabels"][field_entry.label] = (
+                    self.env.docname,
+                    field_entry.label,
+                )
 
                 class_node.append(create_field_node(field_entry))
 
