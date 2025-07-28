@@ -106,7 +106,11 @@ class KitbashFieldDirective(SphinxDirective):
             list[nodes.Node]: Well-formed list of nodes to render into field entry.
 
         """
-        module_str, class_str = self.arguments[0].rsplit(".", maxsplit=1)
+        py_module = self.env.ref_context["py:module"]
+        model_path = (
+            f"{py_module}.{self.arguments[0]}" if py_module else self.arguments[0]
+        )
+        module_str, class_str = model_path.rsplit(".", maxsplit=1)
         module = importlib.import_module(module_str)
         pydantic_class = getattr(module, class_str)
 
@@ -226,7 +230,11 @@ class KitbashModelDirective(SphinxDirective):
             list[nodes.Node]: Well-formed list of nodes to render into field entries.
 
         """
-        module_str, class_str = self.arguments[0].rsplit(".", maxsplit=1)
+        py_module = self.env.ref_context["py:module"]
+        model_path = (
+            f"{py_module}.{self.arguments[0]}" if py_module else self.arguments[0]
+        )
+        module_str, class_str = model_path.rsplit(".", maxsplit=1)
         module = importlib.import_module(module_str)
         pydantic_class = getattr(module, class_str)
 
