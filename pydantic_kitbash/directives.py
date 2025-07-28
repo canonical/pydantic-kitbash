@@ -106,9 +106,10 @@ class KitbashFieldDirective(SphinxDirective):
             list[nodes.Node]: Well-formed list of nodes to render into field entry.
 
         """
-        py_module = self.env.ref_context["py:module"]
         model_path = (
-            f"{py_module}.{self.arguments[0]}" if py_module else self.arguments[0]
+            f"{self.env.ref_context['py:module']}.{self.arguments[0]}"
+            if hasattr(self.env.ref_context, "py:module")
+            else self.arguments[0]
         )
         module_str, class_str = model_path.rsplit(".", maxsplit=1)
         module = importlib.import_module(module_str)
@@ -230,9 +231,10 @@ class KitbashModelDirective(SphinxDirective):
             list[nodes.Node]: Well-formed list of nodes to render into field entries.
 
         """
-        py_module = self.env.ref_context["py:module"]
         model_path = (
-            f"{py_module}.{self.arguments[0]}" if py_module else self.arguments[0]
+            f"{self.env.ref_context['py:module']}.{self.arguments[0]}"
+            if hasattr(self.env.ref_context, "py:module")
+            else self.arguments[0]
         )
         module_str, class_str = model_path.rsplit(".", maxsplit=1)
         module = importlib.import_module(module_str)
