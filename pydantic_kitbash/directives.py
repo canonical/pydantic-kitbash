@@ -30,11 +30,11 @@ import warnings
 from types import UnionType
 from typing import Any, Literal, Union, cast, get_args, get_origin
 
-import pydantic
 import yaml
 from docutils import nodes
 from docutils.parsers.rst import Parser, directives
 from docutils.utils import new_document
+from pydantic import AfterValidator, BaseModel, BeforeValidator
 from pydantic.fields import FieldInfo
 from sphinx.util.docutils import SphinxDirective
 from typing_extensions import override
@@ -106,29 +106,23 @@ class KitbashFieldDirective(SphinxDirective):
             list[nodes.Node]: Well-formed list of nodes to render into field entry.
 
         """
-        py_module = self.env.ref_context.get("py:module", "")
-        model_path = (
-            f"{py_module}.{self.arguments[0]}" if py_module else self.arguments[0]
-        )
-        module_str, class_str = model_path.rsplit(".", maxsplit=1)
-        module = importlib.import_module(module_str)
-        pydantic_class = getattr(module, class_str)
+        pydantic_model = get_pydantic_model(self)
 
         # exit if provided field name is not present in the model
-        if self.arguments[1] not in pydantic_class.__annotations__:
+        if self.arguments[1] not in pydantic_model.__annotations__:
             raise ValueError(f"Could not find field: {self.arguments[1]}")
 
         field_entry = FieldEntry(self.arguments[1], self)
 
         # grab pydantic field data
-        field_params = pydantic_class.model_fields[field_entry.name]
+        field_params = pydantic_model.model_fields[field_entry.name]
 
         field_entry.alias = (
             field_params.alias if field_params.alias else field_entry.name
         )
 
         field_entry.description = get_annotation_docstring(
-            pydantic_class, field_entry.name
+            pydantic_model, field_entry.name
         )
         # Use JSON description value if docstring doesn't exist
         field_entry.description = (
@@ -141,7 +135,7 @@ class KitbashFieldDirective(SphinxDirective):
         field_entry.enum_values = None
 
         # if field is optional "normal" type (e.g., str | None)
-        if get_origin(field_params.annotation) is UnionType:
+        if field_params.annotation and get_origin(field_params.annotation) is UnionType:
             get_optional_field_data(field_entry, field_params.annotation)
         else:
             field_entry.field_type = format_type_string(field_params.annotation)
@@ -153,7 +147,7 @@ class KitbashFieldDirective(SphinxDirective):
             get_enum_field_data(field_entry, field_params.annotation)
 
         field_entry.deprecation_warning = is_deprecated(
-            pydantic_class, field_entry.name
+            pydantic_model, field_entry.name
         )
 
         # Replace type if :override-type: directive option was used
@@ -223,24 +217,15 @@ class KitbashModelDirective(SphinxDirective):
             list[nodes.Node]: Well-formed list of nodes to render into field entries.
 
         """
-        py_module = self.env.ref_context.get("py:module", "")
-        model_path = (
-            f"{py_module}.{self.arguments[0]}" if py_module else self.arguments[0]
-        )
-        module_str, class_str = model_path.rsplit(".", maxsplit=1)
-        module = importlib.import_module(module_str)
-        pydantic_class = getattr(module, class_str)
-
-        if not issubclass(pydantic_class, pydantic.BaseModel):
-            return []
+        pydantic_model = get_pydantic_model(self)
 
         class_node: list[nodes.Node] = []
 
         # User-provided description overrides model docstring
         if self.content:
             class_node += parse_rst_description("\n".join(self.content), self)
-        elif pydantic_class.__doc__ and "skip-description" not in self.options:
-            class_node += parse_rst_description(pydantic_class.__doc__, self)
+        elif pydantic_model.__doc__ and "skip-description" not in self.options:
+            class_node += parse_rst_description(pydantic_model.__doc__, self)
 
         # Check if user provided a list of deprecated fields to include
         include_deprecated = [
@@ -248,9 +233,9 @@ class KitbashModelDirective(SphinxDirective):
             for field in self.options.get("include-deprecated", "").split(",")
         ]
 
-        for field in pydantic_class.__annotations__:
+        for field in pydantic_model.__annotations__:
             deprecation_warning = (
-                is_deprecated(pydantic_class, field)
+                is_deprecated(pydantic_model, field)
                 if not field.startswith(("_", "model_"))
                 else None
             )
@@ -261,7 +246,7 @@ class KitbashModelDirective(SphinxDirective):
                 or field in include_deprecated
             ):
                 # grab pydantic field data (need desc and examples)
-                field_params = pydantic_class.model_fields[field]
+                field_params = pydantic_model.model_fields[field]
 
                 field_entry = FieldEntry(field, self)
                 field_entry.deprecation_warning = deprecation_warning
@@ -271,7 +256,7 @@ class KitbashModelDirective(SphinxDirective):
                 )
 
                 field_entry.description = get_annotation_docstring(
-                    pydantic_class, field_entry.name
+                    pydantic_model, field_entry.name
                 )
                 # Use JSON description value if docstring doesn't exist
                 field_entry.description = (
@@ -339,6 +324,34 @@ class KitbashModelDirective(SphinxDirective):
                 class_node.append(create_field_node(field_entry))
 
         return class_node
+
+
+def get_pydantic_model(
+    directive: KitbashFieldDirective | KitbashModelDirective,
+) -> type[BaseModel]:
+    """Import the model specified by the given directive's arguments.
+
+    Args:
+        directive (KitbashFieldDirective | KitbashModelDirective): Calling directive.
+
+    Returns:
+        type[pydantic.BaseModel]
+
+    """
+    py_module = directive.env.ref_context.get("py:module", "")
+    model_path = (
+        f"{py_module}.{directive.arguments[0]}" if py_module else directive.arguments[0]
+    )
+    module_str, class_str = model_path.rsplit(".", maxsplit=1)
+    module = importlib.import_module(module_str)
+    pydantic_model = getattr(module, class_str)
+
+    if not isinstance(pydantic_model, type) or not issubclass(
+        pydantic_model, BaseModel
+    ):
+        raise TypeError(f"{class_str} is not a subclass of pydantic.BaseModel")
+
+    return pydantic_model
 
 
 def get_optional_field_data(field_entry: FieldEntry, annotation: type[Any]) -> None:
@@ -418,8 +431,7 @@ def get_enum_field_data(field_entry: FieldEntry, annotation: type[Any] | None) -
 
 
 def find_fieldinfo(
-    metadata: tuple[pydantic.BeforeValidator, pydantic.AfterValidator, FieldInfo]
-    | None,
+    metadata: tuple[BeforeValidator, AfterValidator, FieldInfo] | None,
 ) -> FieldInfo | None:
     """Retrieve a field's information from its metadata.
 
@@ -446,7 +458,7 @@ def find_fieldinfo(
     return result
 
 
-def is_deprecated(model: type[pydantic.BaseModel], field: str) -> str | None:
+def is_deprecated(model: type[BaseModel], field: str) -> str | None:
     """Retrieve a field's deprecation message if one exists.
 
     Check to see whether the field's deprecated parameter is truthy or falsy.

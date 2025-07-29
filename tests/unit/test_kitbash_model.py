@@ -153,15 +153,6 @@ def build_section_node(title: str, node_id: str) -> nodes.section:
     return section_node
 
 
-@pytest.mark.parametrize(
-    "fake_model_directive", [{"model": ".OopsNoModel"}], indirect=True
-)
-def test_kitbash_model_invalid(fake_model_directive):
-    """Test for KitbashModelDirective when passed a nonexistent model."""
-
-    assert fake_model_directive.run() == []
-
-
 def test_kitbash_model(fake_model_directive):
     """Test for the KitbashModelDirective."""
 

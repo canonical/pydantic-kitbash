@@ -16,6 +16,7 @@
 
 import enum
 import typing
+from importlib import import_module
 from typing import Annotated, TypeVar
 
 import pydantic
@@ -35,6 +36,7 @@ from pydantic_kitbash.directives import (
     get_enum_member_docstring,
     get_enum_values,
     get_optional_annotated_field_data,
+    get_pydantic_model,
     is_deprecated,
     is_enum_type,
     parse_rst_description,
@@ -150,6 +152,28 @@ One of: ``['one', 'two', 'three']``
 This is the key description
 
 """
+
+
+def test_get_pydantic_model(fake_field_directive):
+    """Test for get_pydantic_model with valid input."""
+
+    module = import_module("tests.unit.conftest")
+    expected = module.MockModel
+    actual = get_pydantic_model(fake_field_directive)
+
+    assert type(expected) is type(actual)
+
+
+@pytest.mark.parametrize(
+    "fake_model_directive", [{"model": ".OopsNoModel"}], indirect=True
+)
+def test_kitbash_model_invalid(fake_model_directive):
+    """Test for get_pydantic_model with invalid input."""
+
+    with pytest.raises(
+        TypeError, match="OopsNoModel is not a subclass of pydantic.BaseModel"
+    ):
+        fake_model_directive.run()
 
 
 def test_find_fieldinfo():
