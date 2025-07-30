@@ -170,7 +170,7 @@ def test_get_pydantic_model(fake_field_directive):
     indirect=True,
 )
 def test_get_pydantic_model_with_module(fake_field_directive):
-    """Test for get_pydantic_model with valid input."""
+    """Test for get_pydantic_model when py:module is set."""
     module = import_module("tests.unit.conftest")
     expected = module.MockModel
 
