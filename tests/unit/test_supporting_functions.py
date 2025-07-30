@@ -165,6 +165,22 @@ def test_get_pydantic_model(fake_field_directive):
 
 
 @pytest.mark.parametrize(
+    "fake_field_directive",
+    [{"arguments": ["MockFieldModel", "mock_field"]}],
+    indirect=True,
+)
+def test_get_pydantic_model_with_module(fake_field_directive):
+    """Test for get_pydantic_model with valid input."""
+    module = import_module("tests.unit.conftest")
+    expected = module.MockModel
+
+    fake_field_directive.env.ref_context["py:module"] = fake_field_directive.__module__
+    actual = get_pydantic_model(fake_field_directive)
+
+    assert type(expected) is type(actual)
+
+
+@pytest.mark.parametrize(
     "fake_model_directive", [{"model": ".OopsNoModel"}], indirect=True
 )
 def test_kitbash_model_invalid(fake_model_directive):

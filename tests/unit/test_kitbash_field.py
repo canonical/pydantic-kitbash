@@ -80,11 +80,14 @@ def test_kitbash_field(fake_field_directive):
     assert str(expected) == str(actual)
 
 
+@pytest.mark.parametrize(
+    "fake_field_directive",
+    [{"arguments": ["MockFieldModel", "mock_field"]}],
+    indirect=True,
+)
 def test_kitbash_field_py_module(fake_field_directive):
     """Test for KitbashFieldDirective."""
     fake_field_directive.env.ref_context["py:module"] = fake_field_directive.__module__
-    fake_field_directive.arguments[0] = "MockFieldModel"
-    fake_field_directive.arguments[1] = "mock_field"
 
     expected = nodes.section(ids=["test", "docname-test"])
     expected["classes"].append("kitbash-entry")
