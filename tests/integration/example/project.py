@@ -36,9 +36,9 @@ class MockModel(pydantic.BaseModel):
         description="this has a multiline example",
         examples=[
             """
-        |
-          wow
-          so many
-          lines"""
+            |
+              wow
+              so many
+              lines"""
         ],
     )
