@@ -600,8 +600,6 @@ def build_examples_block(field_name: str, example: str) -> nodes.literal_block:
             default_flow_style=False,
             sort_keys=False,
         )
-        yaml_str = yaml_str.rstrip("\n")
-        yaml_str = yaml_str.removesuffix("...")
     except yaml.YAMLError as e:
         warnings.warn(
             f"Invalid YAML for field {field_name}: {e}",
@@ -609,6 +607,9 @@ def build_examples_block(field_name: str, example: str) -> nodes.literal_block:
             stacklevel=2,
         )
         yaml_str = example
+
+    yaml_str = yaml_str.rstrip("\n")
+    yaml_str = yaml_str.removesuffix("...")
 
     examples_block = nodes.literal_block(text=yaml_str)
     examples_block["language"] = "yaml"
