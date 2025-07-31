@@ -84,7 +84,7 @@ class KitbashFieldDirective(SphinxDirective):
     """Define the kitbash-field directive's data and behavior."""
 
     required_arguments = 2
-    has_content = False
+    has_content = True
     final_argument_whitespace = True
 
     option_spec = {
@@ -132,6 +132,12 @@ class KitbashFieldDirective(SphinxDirective):
             if field_entry.description is None
             else field_entry.description
         )
+
+        if self.content:
+            supplemental_description = "\n".join(self.content)
+            field_entry.description = (
+                f"{field_entry.description}\n\n{supplemental_description}"
+            )
 
         field_entry.examples = field_params.examples
         field_entry.enum_values = None

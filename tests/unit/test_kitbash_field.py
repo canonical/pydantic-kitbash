@@ -87,6 +87,47 @@ def test_kitbash_field(fake_field_directive):
 
 
 @pytest.mark.parametrize(
+    "fake_field_directive", [{"content": ["*supplemental rST*"]}], indirect=True
+)
+def test_kitbash_field(fake_field_directive):
+    """Test for KitbashFieldDirective."""
+
+    expected = nodes.section(ids=["test", "docname-test"])
+    expected["classes"].append("kitbash-entry")
+    title_node = nodes.title(text="test")
+    expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "docname-test"
+    expected += target_node
+
+    field_entry = """\
+
+    .. important::
+
+        Deprecated. ew.
+
+    **Type**
+
+    ``int``
+
+    **Description**
+
+    description
+
+    *supplemental rST*
+
+    """
+
+    field_entry = strip_whitespace(field_entry)
+    expected += publish_doctree(field_entry).children
+    actual = fake_field_directive.run()[0]
+
+    print(f"{str(expected)}\n{str(actual)}")
+
+    assert str(expected) == str(actual)
+
+
+@pytest.mark.parametrize(
     "fake_field_directive", [{"options": {"prepend-name": "prefix"}}], indirect=True
 )
 def test_kitbash_field_prepend_name(fake_field_directive):

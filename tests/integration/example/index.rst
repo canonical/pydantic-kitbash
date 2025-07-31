@@ -1,5 +1,9 @@
-Fields
-======
+Test output
+===========
+
+
+Field directive
+---------------
 
 .. Test default and manual labels
 
@@ -18,6 +22,28 @@ Fields
 .. kitbash-field:: example.project.MockModel xref_desc_test
 
 .. kitbash-field:: example.project.MockModel xref_docstring_test
+
+
+.. Test directive content
+
+.. kitbash-field:: example.project.MockModel mock_field
+
+    This is supplemental information.
+
+    It can contain as many paragraphs of rST as you want.
+
+    :ref:`References <index-test>` work too!
+
+
+Model directive
+---------------
+
+.. kitbash-model:: example.project.MockModel
+
+    This is the model's description.
+
+    It can contain as many paragraphs as you want.
+
 
 .. toctree::
     :hidden:
