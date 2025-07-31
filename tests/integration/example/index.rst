@@ -19,6 +19,8 @@ Fields
 
 .. kitbash-field:: example.project.MockModel xref_docstring_test
 
+.. kitbash-field:: example.project.MockModel block_string
+
 .. toctree::
     :hidden:
 
