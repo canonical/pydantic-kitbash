@@ -122,8 +122,6 @@ def test_kitbash_field_content(fake_field_directive):
     expected += publish_doctree(field_entry).children
     actual = fake_field_directive.run()[0]
 
-    print(f"{str(expected)}\n{str(actual)}")
-
     assert str(expected) == str(actual)
 
 
