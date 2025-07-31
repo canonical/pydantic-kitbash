@@ -35,9 +35,10 @@ class MockModel(pydantic.BaseModel):
     block_string: str = pydantic.Field(
         description="this has a multiline example",
         examples=[
-            "|\
-            wow\
-            so many\
-            lines"
+            """
+        |
+          wow
+          so many
+          lines"""
         ],
     )

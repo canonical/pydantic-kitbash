@@ -80,6 +80,13 @@ class PrettyListDumper(yaml.Dumper):
         return super().increase_indent(flow, indentless=False)
 
 
+def str_presenter(dumper: yaml.Dumper, data: str) -> yaml.nodes.ScalarNode:
+    """Use the "|" style when presenting multiline strings."""
+    if "\n" in data:
+        return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")  # type: ignore[reportUnknownMemberType]
+    return dumper.represent_scalar("tag:yaml.org,2002:str", data)  # type: ignore[reportUnknownMemberType]
+
+
 class KitbashFieldDirective(SphinxDirective):
     """Define the kitbash-field directive's data and behavior."""
 
@@ -581,11 +588,15 @@ def build_examples_block(field_name: str, example: str) -> nodes.literal_block:
         nodes.literal_block: A literal block containing a well-formed YAML example.
 
     """
+    PrettyListDumper.add_representer(str, str_presenter)
     example = f"{field_name.rsplit('.', maxsplit=1)[-1]}: {example}"
+    if not example.endswith("\n"):
+        example = f"{example}\n"
     try:
         yaml_str = yaml.dump(
             yaml.safe_load(example),
             Dumper=PrettyListDumper,
+            default_style=None,
             default_flow_style=False,
             sort_keys=False,
         )

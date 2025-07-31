@@ -50,6 +50,8 @@ def test_pydantic_kitbash_integration(example_project):
     soup = bs4.BeautifulSoup(index.read_text(), features="lxml")
     shutil.rmtree(example_project)  # Delete copied source
 
+    pytest.fail("bc i said so")
+
     # Check if field entry was created
     assert soup.find("section", {"class": "kitbash-entry"})
 
