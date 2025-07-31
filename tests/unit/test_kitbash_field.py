@@ -89,8 +89,8 @@ def test_kitbash_field(fake_field_directive):
 @pytest.mark.parametrize(
     "fake_field_directive", [{"content": ["*supplemental rST*"]}], indirect=True
 )
-def test_kitbash_field(fake_field_directive):
-    """Test for KitbashFieldDirective."""
+def test_kitbash_field_content(fake_field_directive):
+    """Test for KitbashFieldDirective when content is provided."""
 
     expected = nodes.section(ids=["test", "docname-test"])
     expected["classes"].append("kitbash-entry")
