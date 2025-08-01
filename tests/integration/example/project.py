@@ -31,3 +31,14 @@ class MockModel(pydantic.BaseModel):
 
     xref_docstring_test: str = pydantic.Field(description="ignored")
     """:ref:`the-other-file`"""
+
+    block_string: str = pydantic.Field(
+        description="this has a multiline example",
+        examples=[
+            """
+            |
+              wow
+              so many
+              lines"""
+        ],
+    )

@@ -24,6 +24,11 @@ Field directive
 .. kitbash-field:: example.project.MockModel xref_docstring_test
 
 
+.. Test multiline examples
+
+.. kitbash-field:: example.project.MockModel block_string
+
+
 .. Test directive content
 
 .. kitbash-field:: example.project.MockModel mock_field
