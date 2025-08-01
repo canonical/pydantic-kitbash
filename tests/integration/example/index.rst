@@ -35,10 +35,17 @@ Field directive
     :ref:`References <index-test>` work too!
 
 
+.. Test with py:module set
+
+.. py:currentmodule:: example.project
+
+.. kitbash-field:: MockModel mock_field
+
+
 Model directive
 ---------------
 
-.. kitbash-model:: example.project.MockModel
+.. kitbash-model:: MockModel
 
     This is the model's description.
 
