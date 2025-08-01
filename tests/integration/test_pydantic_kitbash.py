@@ -56,7 +56,7 @@ def test_pydantic_kitbash_integration(example_project):
     assert soup.find("section", {"class": "kitbash-entry"})
 
     # Check if heading level is correct and contains proper link
-    field_heading = soup.find("h2")
+    field_heading = soup.find("h3")
     if field_heading:
         assert getattr(field_heading, "text", None) == "test¶"
     else:
