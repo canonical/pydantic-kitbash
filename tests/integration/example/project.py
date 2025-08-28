@@ -27,6 +27,8 @@ class MockModel(pydantic.BaseModel):
         deprecated="ew.",
     )
 
+    no_desc: str
+
     xref_desc_test: str = pydantic.Field(description=":ref:`the-other-file`")
 
     xref_docstring_test: str = pydantic.Field(description="ignored")

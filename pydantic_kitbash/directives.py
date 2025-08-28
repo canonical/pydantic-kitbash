@@ -138,12 +138,6 @@ class KitbashFieldDirective(SphinxDirective):
             else field_entry.description
         )
 
-        if self.content:
-            supplemental_description = "\n".join(self.content)
-            field_entry.description = (
-                f"{field_entry.description}\n\n{supplemental_description}"
-            )
-
         field_entry.examples = field_params.examples
         field_entry.enum_values = None
 
@@ -162,6 +156,15 @@ class KitbashFieldDirective(SphinxDirective):
         field_entry.deprecation_warning = is_deprecated(
             pydantic_model, field_entry.name
         )
+
+        # Append directive content to description
+        if self.content:
+            supplemental_description = "\n".join(self.content)
+            field_entry.description = (
+                f"{field_entry.description}\n\n{supplemental_description}"
+                if field_entry.description
+                else supplemental_description
+            )
 
         # Replace type if :override-type: directive option was used
         field_entry.field_type = self.options.get(

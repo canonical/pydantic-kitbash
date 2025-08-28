@@ -86,3 +86,14 @@ def test_pydantic_kitbash_integration(example_project):
         getattr(soup.find("span", {"class": "l l-Scalar l-Scalar-Plain"}), "text", None)
         == "val1"
     )
+
+    # Check that null descriptions with content don't include 'None'
+    null_desc_entry = soup.find("section", id="no_desc")
+    if null_desc_entry:
+        field_content = null_desc_entry.find_all_next("p")
+        assert (
+            getattr(field_content[3], "text", None)
+            == "This is the only thing rendered in the description."
+        )
+    else:
+        pytest.fail("`no-desc` entry not found in output.")

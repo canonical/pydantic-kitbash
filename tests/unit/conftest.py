@@ -214,6 +214,7 @@ class MockFieldModel(pydantic.BaseModel):
     uniontype_field: str | None = pydantic.Field(
         description="This is types.UnionType",
     )
+    no_desc: str = pydantic.Field(alias="no-desc")
     enum_field: MockEnum
     enum_uniontype: MockEnum | None
     typing_union: TEST_TYPE_EXAMPLES | None

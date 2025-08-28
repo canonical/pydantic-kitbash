@@ -39,6 +39,10 @@ Field directive
 
     :ref:`References <index-test>` work too!
 
+.. kitbash-field:: example.project.MockModel no_desc
+
+    This is the only thing rendered in the description.
+
 
 .. Test with py:module set
 
