@@ -41,7 +41,7 @@ Field directive
 
 .. kitbash-field:: example.project.MockModel no_desc
 
-    This field doesn't have a description, so this should take its place.
+    This is the only thing rendered in the description.
 
 
 .. Test with py:module set
