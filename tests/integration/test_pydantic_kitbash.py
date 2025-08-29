@@ -17,9 +17,23 @@
 import shutil
 import subprocess
 from pathlib import Path
+from typing import cast
 
 import bs4
 import pytest
+
+
+def get_field_description(
+    field_id: str, idx: int, soup: bs4.BeautifulSoup
+) -> bs4.element.PageElement:
+    field_entry = soup.find("section", id=field_id)
+
+    desc = bs4.element.PageElement()
+    if field_entry:
+        field_contents = field_entry.find_all_next("p")
+        return field_contents[3]
+
+    return desc
 
 
 @pytest.fixture
@@ -87,13 +101,33 @@ def test_pydantic_kitbash_integration(example_project):
         == "val1"
     )
 
-    # Check that null descriptions with content don't include 'None'
-    null_desc_entry = soup.find("section", id="no_desc")
-    if null_desc_entry:
-        field_content = null_desc_entry.find_all_next("p")
-        assert (
-            getattr(field_content[3], "text", None)
-            == "This is the only thing rendered in the description."
-        )
+    # Ensure that the internal reference from the field's description was created
+    assert get_field_description("xref_desc_test", 3, soup).find_next(
+        "span", {"class": "std std-ref"}
+    )
+
+    # Ensure that the internal reference from the field's docstring was created
+    assert get_field_description("xref_docstring_test", 3, soup).find_next(
+        "span", {"class": "std std-ref"}
+    )
+
+    # Ensure that PyYAML doesn't mangle the whitespace in multiline examples.
+    block_string_entry = soup.find("section", id="block_string")
+    if block_string_entry:
+        multiline_yaml_example = block_string_entry.find_next(
+            "div", {"class": "highlight-yaml notranslate"}
+        )  # grab the field entry's example
+        multiline_yaml_example = cast(bs4.Tag, multiline_yaml_example)
+        if multiline_yaml_example:
+            # There should be 4 occurrences of whitespace (including the first line)
+            assert len(multiline_yaml_example.find_all("span", {"class": "w"})) == 4
+        else:
+            pytest.fail("Multiline YAML example not found in output.")
     else:
-        pytest.fail("`no-desc` entry not found in output.")
+        pytest.fail("block_string entry not found in output.")
+
+    # Check that directive content renders correctly when the field description is 'None'
+    assert (
+        getattr(get_field_description("no_desc", 3, soup), "text", None)
+        == "This field has no other description."
+    )
