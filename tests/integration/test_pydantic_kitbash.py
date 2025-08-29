@@ -104,7 +104,7 @@ def test_pydantic_kitbash_integration(example_project):
     # Ensure that the internal reference from the field's description was created
     assert get_field_description("xref_desc_test", 3, soup).find_next(
         "span", {"class": "std std-ref"}
-    )
+    )  # The description body is the third paragraph in the section
 
     # Ensure that the internal reference from the field's docstring was created
     assert get_field_description("xref_docstring_test", 3, soup).find_next(
