@@ -139,7 +139,7 @@ def fake_model_directive(
 def mock_state(tmp_path) -> RSTState:
     state_machine = RSTStateMachine([], "")
     state = RSTState(state_machine)
-    document = new_document("docname", settings=get_default_settings(Parser))
+    document = new_document("docname", settings=get_default_settings(Parser()))
 
     src_dir = tmp_path / "src"
 
