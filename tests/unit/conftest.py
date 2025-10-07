@@ -139,7 +139,13 @@ def fake_model_directive(
 def mock_state(tmp_path) -> RSTState:
     state_machine = RSTStateMachine([], "")
     state = RSTState(state_machine)
-    document = new_document("docname", settings=get_default_settings(Parser))
+
+    # `get_default_settings` only requires that `.settings_spec` is an available field
+    # on each of its parameters. Since docutils doesn't expose that in a usable type,
+    # just check it manually here (to be sure our assumption still holds true) and then
+    # ignore the lint
+    assert hasattr(Parser, "settings_spec")
+    document = new_document("docname", settings=get_default_settings(Parser))  # type: ignore[reportArgumentType, arg-type]
 
     src_dir = tmp_path / "src"
 
