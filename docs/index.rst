@@ -1,7 +1,5 @@
-.. sphinx-craft-docs documentation root file
-
-sphinx-craft-docs
-=================
+Kitbash
+=======
 
 .. .. toctree::
 ..    :maxdepth: 1
@@ -29,7 +27,7 @@ sphinx-craft-docs
 Project and community
 ---------------------
 
-sphinx-craft-docs is a member of the Canonical family. It's an open source project that
+Kitbash is a member of the Canonical family. It's an open source project that
 warmly welcomes community projects, contributions, suggestions, fixes and constructive
 feedback.
 
