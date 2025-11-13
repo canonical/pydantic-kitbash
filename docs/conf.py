@@ -1,4 +1,4 @@
-# This file is part of sphinx-craft-docs.
+# This file is part of pydantic-kitbash.
 #
 # Copyright 2024 Canonical Ltd.
 #
@@ -16,52 +16,19 @@
 
 import datetime
 
-project = "sphinx-craft-docs"
+project = "Kitbash"
 author = "Canonical"
 
 copyright = "2025-%s, %s" % (datetime.date.today().year, author)
 
-# region Configuration for canonical-sphinx
-ogp_site_url = "https://canonical-sphinx-craft-docs.readthedocs-hosted.com/"
-ogp_site_name = project
-ogp_image = "https://assets.ubuntu.com/v1/253da317-image-document-ubuntudocs.svg"
-
-html_context = {
-    "product_page": "github.com/canonical/sphinx-craft-docs",
-    "github_url": "https://github.com/canonical/sphinx-craft-docs",
-}
-
-extensions = [
-
+# Excludes files or directories from processing
+exclude_patterns = [
+    "tutorials/index.rst",
+    "how-to/index.rst",
+    "reference/index.rst",
+    "explanation/index.rst",
+    "release-notes/index.rst",
 ]
-# endregion
-
-# region General configuration
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
-
-extensions.extend(
-    [
-        "sphinx.ext.intersphinx",
-        "sphinx.ext.viewcode",
-        "sphinx.ext.coverage",
-        "sphinx.ext.doctest",
-        "sphinx-pydantic",
-        "sphinx_toolbox",
-        "sphinx_toolbox.more_autodoc",
-        "sphinx.ext.autodoc",  # Must be loaded after more_autodoc
-        "sphinxext.rediraffe",
-    ]
-)
-
-# endregion
-
-# region Options for extensions
-# Intersphinx extension
-# https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html#configuration
-
-intersphinx_mapping = {
-    "python": ("https://docs.python.org/3", None),
-}
 
 # Type hints configuration
 set_type_checking_flag = True
@@ -70,7 +37,7 @@ always_document_param_types = True
 
 # Github config
 github_username = "canonical"
-github_repository = "sphinx-craft-docs"
+github_repository = "pydantic-kitbash"
 
 # endregion
 
