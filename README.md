@@ -9,17 +9,16 @@ reStructuredText to the field's docstring to supplement the standard output.
 
 ## Basic usage
 
-To document an individual field, add the `kitbash-field` directive to your document:
+The `kitbash-field` directive documents an individual field:
 
 ```rst
-.. kitbash-field:: <model-name> <field-name>
+.. kitbash-field:: my-model my-field
 ```
 
-If you'd prefer to document an entire model, add the `kitbash-model` directive to your
-document:
+The `kitbash-model` directive directive documents an entire model:
 
 ```rst
-.. kitbash-model:: <model-name>
+.. kitbash-model:: my-model
 ```
 
 ### Options
@@ -27,14 +26,14 @@ document:
 If a field's examples aren't needed, skip them:
 
 ```rst
-.. kitbash-field:: <model-name> <field-name>
+.. kitbash-field:: my-model my-field
     :skip-examples:
 ```
 
 If the field's type is overly verbose, malformed, or unhelpful, override it:
 
 ```rst
-.. kitbash-field:: <model-name> <field-name>
+.. kitbash-field:: my-model my-field
     :override-type: Any
 ```
 
@@ -42,28 +41,28 @@ You can add to the start of the field's name in the document. For example, to ma
 `my-field` become `permissions.my-field`, use:
 
 ```rst
-.. kitbash-field:: <model-name> my_field
+.. kitbash-field:: my-model my-field
     :prepend-name: permissions
 ```
 
 You can add to the end of the field's name in the document. For example, to make
-`my-field` become `my-field.v1`, use:
+`my-field` become `my-field-v1`, use:
 
 ```rst
-.. kitbash-field:: <model-name> my_field
-    :append-name: v1
+.. kitbash-field:: my-model my-field
+    :append-name: -v1
 ```
 
-Kitbash automatically add a Sphinx target for each entry. The target names follow the
-format `<page-filename>-<field-name>`. You can override this as well:
+Kitbash automatically adds a Sphinx label for each entry. The label names have the
+format `<page-filename>-<field-name>`. For fields, you can override the
+`<page-filename>` prefix:
 
 ```rst
-.. kitbash-model:: <model-name>
-    :label: new-model
-
-.. kitbash-field:: <model-name> <field-name>
-    :label: new-field
+.. kitbash-field:: my-model my_field
+    :label: dev
 ```
+
+In this example, the label becomes `dev-my-field`.
 
 ## Project setup
 
