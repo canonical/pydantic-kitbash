@@ -1,7 +1,7 @@
 # pydantic-kitbash
 
-Kitbash is a Sphinx extension that automates the generation of reference documentation
-for Pydantic models.
+Kitbash is a Sphinx extension that generates reference documentation for Pydantic
+models.
 
 Kitbash parses a model to describe its fields in a Sphinx document. It can target an
 entire model or specific fields. When covering a specific field, you can add
@@ -12,13 +12,13 @@ reStructuredText to the field's docstring to supplement the standard output.
 The `kitbash-field` directive documents an individual field:
 
 ```rst
-.. kitbash-field:: my-model my-field
+.. kitbash-field:: my_model my_field
 ```
 
 The `kitbash-model` directive directive documents an entire model:
 
 ```rst
-.. kitbash-model:: my-model
+.. kitbash-model:: my_model
 ```
 
 ### Options
@@ -29,7 +29,7 @@ Bypasses the field's examples on the page. Use this when the examples are incomp
 unhelpful.
 
 ```rst
-.. kitbash-field:: my-model my-field
+.. kitbash-field:: my_model my_field
     :skip-examples:
 ```
 
@@ -39,38 +39,39 @@ Overrides the field's type on the page. Use this when the type is overly verbose
 malformed, or unhelpful.
 
 ```rst
-.. kitbash-field:: my-model my-field
+.. kitbash-field:: my_model my_field
     :override-type: Any
 ```
 
 #### `prepend-name`
 
 Adds a prefix to the field name on the page. The prefix is separated by a period (.).
-This example makes the field render as `permissions.my-field`:
+This example makes the field render as `permissions.my_field`:
 
 ```rst
-.. kitbash-field:: my-model my-field
+.. kitbash-field:: my_model my_field
     :prepend-name: permissions
 ```
 
 #### `append-name`
 
-Adds a suffix to the field name on the page. The prefix is separated by a period (.).
-This example makes the field render as `my-field.v1`:
+Adds a suffix to the field name on the page. The suffix is separated by a period (.).
+This example makes the field render as `my_field.v1`:
 
 ```rst
-.. kitbash-field:: my-model my-field
+.. kitbash-field:: my_model my_field
     :append-name: v1
 ```
 
 #### `label`
 
-Overrides the Sphinx label prefix for a field. By default, Kitbash adds a Sphinx label
-for each entry. The labels have the format `<page-filename>-<field-name>`. This example rewrites the label as `dev-my-field`:
+Overrides the reStructuredText label for a field. By default, Kitbash adds a label for
+each entry, formatted as `<page-filename>-<field-name>`. This example renames the label
+to `dev-my-field`:
 
 ```rst
-.. kitbash-field:: my-model my_field
-    :label: dev
+.. kitbash-field:: my_model my_field
+    :label: dev-my-field
 ```
 
 ## Project setup
