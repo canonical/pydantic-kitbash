@@ -23,46 +23,55 @@ The `kitbash-model` directive directive documents an entire model:
 
 ### Options
 
-If a field's examples aren't needed, skip them:
+#### `skip-examples`
+
+Bypasses the field's examples on the page. Use this when the examples are incomplete or
+unhelpful.
 
 ```rst
 .. kitbash-field:: my-model my-field
     :skip-examples:
 ```
 
-If the field's type is overly verbose, malformed, or unhelpful, override it:
+#### `override-type`
+
+Overrides the field's type on the page. Use this when the type is overly verbose,
+malformed, or unhelpful.
 
 ```rst
 .. kitbash-field:: my-model my-field
     :override-type: Any
 ```
 
-You can add to the start of the field's name in the document. For example, to make
-`my-field` become `permissions.my-field`, use:
+#### `prepend-name`
+
+Adds a prefix to the field name on the page. The prefix is separated by a period (.).
+This example makes the field render as `permissions.my-field`:
 
 ```rst
 .. kitbash-field:: my-model my-field
     :prepend-name: permissions
 ```
 
-You can add to the end of the field's name in the document. For example, to make
-`my-field` become `my-field-v1`, use:
+#### `append-name`
+
+Adds a suffix to the field name on the page. The prefix is separated by a period (.).
+This example makes the field render as `my-field.v1`:
 
 ```rst
 .. kitbash-field:: my-model my-field
-    :append-name: -v1
+    :append-name: v1
 ```
 
-Kitbash automatically adds a Sphinx label for each entry. The label names have the
-format `<page-filename>-<field-name>`. For fields, you can override the
-`<page-filename>` prefix:
+#### `label`
+
+Overrides the Sphinx label prefix for a field. By default, Kitbash adds a Sphinx label
+for each entry. The labels have the format `<page-filename>-<field-name>`. This example rewrites the label as `dev-my-field`:
 
 ```rst
 .. kitbash-field:: my-model my_field
     :label: dev
 ```
-
-In this example, the label becomes `dev-my-field`.
 
 ## Project setup
 
