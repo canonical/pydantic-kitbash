@@ -1,7 +1,7 @@
 # pydantic-kitbash
 
-Kitbash is a Sphinx extension that automates the generation of reference documentation
-for Pydantic models.
+Kitbash is a Sphinx extension that generates reference documentation for Pydantic
+models.
 
 Kitbash parses a model to describe its fields in a Sphinx document. It can target an
 entire model or specific fields. When covering a specific field, you can add
@@ -9,17 +9,69 @@ reStructuredText to the field's docstring to supplement the standard output.
 
 ## Basic usage
 
-To document an individual field, add the `kitbash-field` directive to your document:
+The `kitbash-field` directive documents an individual field:
 
-```
-.. kitbash-field:: <model-name> <field-name>
+```rst
+.. kitbash-field:: my_model my_field
 ```
 
-If you'd prefer to document an entire model, add the `kitbash-model` directive to your
-document:
+The `kitbash-model` directive directive documents an entire model:
 
+```rst
+.. kitbash-model:: my_model
 ```
-.. kitbash-model:: <model-name>
+
+### Options
+
+#### `skip-examples`
+
+Bypasses the field's examples on the page. Use this when the examples are incomplete or
+unhelpful.
+
+```rst
+.. kitbash-field:: my_model my_field
+    :skip-examples:
+```
+
+#### `override-type`
+
+Overrides the field's type on the page. Use this when the type is overly verbose,
+malformed, or unhelpful.
+
+```rst
+.. kitbash-field:: my_model my_field
+    :override-type: Any
+```
+
+#### `prepend-name`
+
+Adds a prefix to the field name on the page. The prefix is separated by a period (.).
+This example makes the field render as `permissions.my_field`:
+
+```rst
+.. kitbash-field:: my_model my_field
+    :prepend-name: permissions
+```
+
+#### `append-name`
+
+Adds a suffix to the field name on the page. The suffix is separated by a period (.).
+This example makes the field render as `my_field.v1`:
+
+```rst
+.. kitbash-field:: my_model my_field
+    :append-name: v1
+```
+
+#### `label`
+
+Overrides the reStructuredText label for a field. By default, Kitbash adds a label for
+each entry, formatted as `<page-filename>-<field-name>`. This example renames the label
+to `dev-my-field`:
+
+```rst
+.. kitbash-field:: my_model my_field
+    :label: dev-my-field
 ```
 
 ## Project setup
