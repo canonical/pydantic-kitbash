@@ -371,10 +371,10 @@ def get_pydantic_model(
             f"Module '{module_str}' does not exist or cannot be imported."
         )
 
-    if hasattr(module, class_str):
-        pydantic_model = getattr(module, class_str)
-    else:
+    if not hasattr(module, class_str):
         raise AttributeError(f"Module '{module_str}' has no model '{class_str}'")
+
+    pydantic_model = getattr(module, class_str)
 
     if not isinstance(pydantic_model, type) or not issubclass(
         pydantic_model, BaseModel
