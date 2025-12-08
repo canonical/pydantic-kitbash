@@ -19,9 +19,14 @@ from typing import Literal
 import pydantic
 
 
-class ParentModel(pydantic.BaseModel):
-    inherited_field: str
-    """please god let this work"""
+class GrandparentModel(pydantic.BaseModel):
+    grandparent_field: str
+    """This field is inherited from a grandparent model."""
+
+
+class ParentModel(GrandparentModel):
+    parent_field: str
+    """This field is inherited from a parent model."""
 
 
 class MockModel(ParentModel):

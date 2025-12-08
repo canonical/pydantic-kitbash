@@ -131,3 +131,12 @@ def test_pydantic_kitbash_integration(example_project):
         getattr(get_field_description("no_desc", 3, soup), "text", None)
         == "This field has no other description."
     )
+
+    assert (
+        getattr(get_field_description("parent_field", 3, soup), "text", None)
+        == "This field is inherited from a parent model."
+    )
+    assert (
+        getattr(get_field_description("grandparent_field", 3, soup), "text", None)
+        == "This field is inherited from a grandparent model."
+    )
