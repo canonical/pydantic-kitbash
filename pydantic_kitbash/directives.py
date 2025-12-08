@@ -12,7 +12,7 @@
 # License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License along with
-# this program.  If not, see <http://www.gnu.org/licenses/>.
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 """Define core functions of pydantic-kitbash directives.
 
@@ -353,7 +353,9 @@ def get_pydantic_model(
     """Import the model specified by the given directive's arguments.
 
     Args:
-        # FIXME
+        py_module (str): The python module declared by pu:currentmodule
+        model_name (str): The model name passed from the directive (<directive>.arguments[0])
+        field_name (str): The field name passed from the directive (<directive.arguments[1])
 
     Returns:
         type[pydantic.BaseModel]
