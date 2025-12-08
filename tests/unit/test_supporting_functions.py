@@ -154,28 +154,22 @@ This is the key description
 """
 
 
-def test_get_pydantic_model(fake_field_directive):
+def test_get_pydantic_model():
     """Test for get_pydantic_model with valid input."""
 
     module = import_module("tests.unit.conftest")
     expected = module.MockModel
-    actual = get_pydantic_model(fake_field_directive)
+    actual = get_pydantic_model("", "tests.unit.conftest.MockModel", "")
 
     assert type(expected) is type(actual)
 
 
-@pytest.mark.parametrize(
-    "fake_field_directive",
-    [{"arguments": ["MockFieldModel", "mock_field"]}],
-    indirect=True,
-)
-def test_get_pydantic_model_with_module(fake_field_directive):
+def test_get_pydantic_model_with_module():
     """Test for get_pydantic_model when py:module is set."""
     module = import_module("tests.unit.conftest")
     expected = module.MockModel
 
-    fake_field_directive.env.ref_context["py:module"] = fake_field_directive.__module__
-    actual = get_pydantic_model(fake_field_directive)
+    actual = get_pydantic_model("tests.unit.conftest", "MockFieldModel", "mock_field")
 
     assert type(expected) is type(actual)
 
