@@ -178,7 +178,8 @@ def test_get_pydantic_model_bad_import():
     """Test for get_pydantic_model when passes a non-Model class."""
 
     with pytest.raises(
-        ImportError, match="Module 'this.does.not.exist' does not exist or cannot be imported."
+        ImportError,
+        match="Module 'this.does.not.exist' does not exist or cannot be imported.",
     ):
         get_pydantic_model("this.does.not.exist", "", "")
 
