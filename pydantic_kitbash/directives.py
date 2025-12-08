@@ -113,7 +113,11 @@ class KitbashFieldDirective(SphinxDirective):
             list[nodes.Node]: Well-formed list of nodes to render into field entry.
 
         """
-        pydantic_model = get_pydantic_model(self.env.ref_context.get("py:module", ""), self.arguments[0], self.arguments[1])
+        pydantic_model = get_pydantic_model(
+            self.env.ref_context.get("py:module", ""),
+            self.arguments[0],
+            self.arguments[1],
+        )
 
         # exit if provided field name is not present in the model
         if self.arguments[1] not in pydantic_model.model_fields:
@@ -359,12 +363,16 @@ def get_pydantic_model(
         type[pydantic.BaseModel]
 
     """
-    model_path = (
-        f"{py_module}.{model_name}" if py_module else model_name
-    )
+    model_path = f"{py_module}.{model_name}" if py_module else model_name
+
     module_str, class_str = model_path.rsplit(".", maxsplit=1)
-    module = importlib.import_module(module_str)
-    pydantic_model = getattr(module, class_str)
+    try:
+        module = importlib.import_module(module_str)
+        pydantic_model = getattr(module, class_str)
+    except ModuleNotFoundError:
+        raise ImportError(
+            f"Module '{module_str}' does not exist or cannot be imported."
+        )
 
     if not isinstance(pydantic_model, type) or not issubclass(
         pydantic_model, BaseModel
