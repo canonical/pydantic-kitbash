@@ -366,20 +366,24 @@ def get_pydantic_model(
     module_str, class_str = model_path.rsplit(".", maxsplit=1)
     try:
         module = importlib.import_module(module_str)
-        pydantic_model = getattr(module, class_str)
     except ModuleNotFoundError:
         raise ImportError(
             f"Module '{module_str}' does not exist or cannot be imported."
         )
 
+    if hasattr(module, class_str):
+        pydantic_model = getattr(module, class_str)
+    else:
+        raise AttributeError(f"Module '{module_str}' has no model '{class_str}'")
+
     if not isinstance(pydantic_model, type) or not issubclass(
         pydantic_model, BaseModel
     ):
-        raise TypeError(f"{class_str} is not a subclass of pydantic.BaseModel")
+        raise TypeError(f"'{class_str}' is not a subclass of pydantic.BaseModel")
 
     if field_name:
         if field_name not in pydantic_model.model_fields:
-            raise ValueError(f"Could not find field: {field_name}")
+            raise AttributeError(f"Could not find field '{field_name}'")
 
         for cls in pydantic_model.__mro__:
             if (

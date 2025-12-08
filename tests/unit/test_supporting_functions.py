@@ -184,11 +184,20 @@ def test_get_pydantic_model_bad_import():
         get_pydantic_model("this.does.not.exist", "", "")
 
 
+def test_get_pydantic_model_nonexistent_model():
+    """Test for get_pydantic_model when passes a non-Model class."""
+
+    with pytest.raises(
+        AttributeError, match="Module 'tests.unit.conftest' has no model 'DoesNotExist'"
+    ):
+        get_pydantic_model("tests.unit.conftest", "DoesNotExist", "")
+
+
 def test_get_pydantic_model_invalid_class():
     """Test for get_pydantic_model when passes a non-Model class."""
 
     with pytest.raises(
-        TypeError, match="OopsNoModel is not a subclass of pydantic.BaseModel"
+        TypeError, match="'OopsNoModel' is not a subclass of pydantic.BaseModel"
     ):
         get_pydantic_model("tests.unit.conftest", "OopsNoModel", "")
 
