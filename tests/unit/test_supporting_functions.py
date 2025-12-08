@@ -174,16 +174,22 @@ def test_get_pydantic_model_with_module():
     assert type(expected) is type(actual)
 
 
-@pytest.mark.parametrize(
-    "fake_model_directive", [{"model": ".OopsNoModel"}], indirect=True
-)
-def test_kitbash_model_invalid(fake_model_directive):
-    """Test for get_pydantic_model with invalid input."""
+def test_get_pydantic_model_bad_import():
+    """Test for get_pydantic_model when passes a non-Model class."""
+
+    with pytest.raises(
+        ImportError, match="Module 'this.does.not.exist' does not exist or cannot be imported."
+    ):
+        get_pydantic_model("this.does.not.exist", "", "")
+
+
+def test_get_pydantic_model_invalid_class():
+    """Test for get_pydantic_model when passes a non-Model class."""
 
     with pytest.raises(
         TypeError, match="OopsNoModel is not a subclass of pydantic.BaseModel"
     ):
-        fake_model_directive.run()
+        get_pydantic_model("tests.unit.conftest", "OopsNoModel", "")
 
 
 def test_find_fieldinfo():
