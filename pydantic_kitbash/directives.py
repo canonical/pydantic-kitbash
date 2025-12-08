@@ -119,10 +119,6 @@ class KitbashFieldDirective(SphinxDirective):
             self.arguments[1],
         )
 
-        # exit if provided field name is not present in the model
-        if self.arguments[1] not in pydantic_model.model_fields:
-            raise ValueError(f"Could not find field: {self.arguments[1]}")
-
         field_entry = FieldEntry(self.arguments[1], self)
 
         # grab pydantic field data
