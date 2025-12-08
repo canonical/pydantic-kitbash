@@ -113,10 +113,10 @@ class KitbashFieldDirective(SphinxDirective):
             list[nodes.Node]: Well-formed list of nodes to render into field entry.
 
         """
-        pydantic_model = get_pydantic_model(self)
+        pydantic_model = get_pydantic_model(self.env.ref_context.get("py:module", ""), self.arguments[0], self.arguments[1])
 
         # exit if provided field name is not present in the model
-        if self.arguments[1] not in pydantic_model.__annotations__:
+        if self.arguments[1] not in pydantic_model.model_fields:
             raise ValueError(f"Could not find field: {self.arguments[1]}")
 
         field_entry = FieldEntry(self.arguments[1], self)
@@ -233,7 +233,8 @@ class KitbashModelDirective(SphinxDirective):
             list[nodes.Node]: Well-formed list of nodes to render into field entries.
 
         """
-        pydantic_model = get_pydantic_model(self)
+        py_module = self.env.ref_context.get("py:module", "")
+        pydantic_model = get_pydantic_model(py_module, self.arguments[0], "")
 
         class_node: list[nodes.Node] = []
 
@@ -249,7 +250,9 @@ class KitbashModelDirective(SphinxDirective):
             for field in self.options.get("include-deprecated", "").split(",")
         ]
 
-        for field in pydantic_model.__annotations__:
+        for field in pydantic_model.model_fields:
+            pydantic_model = get_pydantic_model(py_module, self.arguments[0], field)
+
             deprecation_warning = (
                 is_deprecated(pydantic_model, field)
                 if not field.startswith(("_", "model_"))
@@ -343,20 +346,21 @@ class KitbashModelDirective(SphinxDirective):
 
 
 def get_pydantic_model(
-    directive: KitbashFieldDirective | KitbashModelDirective,
+    py_module: str,
+    model_name: str,
+    field_name: str,
 ) -> type[BaseModel]:
     """Import the model specified by the given directive's arguments.
 
     Args:
-        directive (KitbashFieldDirective | KitbashModelDirective): Calling directive.
+        # FIXME
 
     Returns:
         type[pydantic.BaseModel]
 
     """
-    py_module = directive.env.ref_context.get("py:module", "")
     model_path = (
-        f"{py_module}.{directive.arguments[0]}" if py_module else directive.arguments[0]
+        f"{py_module}.{model_name}" if py_module else model_name
     )
     module_str, class_str = model_path.rsplit(".", maxsplit=1)
     module = importlib.import_module(module_str)
@@ -366,6 +370,18 @@ def get_pydantic_model(
         pydantic_model, BaseModel
     ):
         raise TypeError(f"{class_str} is not a subclass of pydantic.BaseModel")
+
+    if field_name:
+        if field_name not in pydantic_model.model_fields:
+            raise ValueError(f"Could not find field: {field_name}")
+
+        for cls in pydantic_model.__mro__:
+            if (
+                issubclass(cls, BaseModel)
+                and hasattr(cls, "__annotations__")
+                and field_name in cls.__annotations__
+            ):
+                pydantic_model = cls
 
     return pydantic_model
 

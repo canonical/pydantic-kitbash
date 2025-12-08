@@ -19,7 +19,11 @@ from typing import Literal
 import pydantic
 
 
-class MockModel(pydantic.BaseModel):
+class ParentModel(pydantic.BaseModel):
+    inherited_field: str
+    """please god let this work"""
+
+class MockModel(ParentModel):
     mock_field: Literal["val1", "val2"] = pydantic.Field(
         description="description",
         examples=["val1", "val2"],

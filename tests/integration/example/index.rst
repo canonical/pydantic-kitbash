@@ -65,3 +65,9 @@ Model directive
     :hidden:
 
     the-other-file
+
+
+Inherited field
+---------------
+
+.. kitbash-field:: MockModel inherited_field
