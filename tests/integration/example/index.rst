@@ -51,8 +51,6 @@ Field directive
 
 .. kitbash-field:: MockModel parent_field
 
-.. kitbash-field:: MockModel grandparent_field
-
 
 Model directive
 ---------------

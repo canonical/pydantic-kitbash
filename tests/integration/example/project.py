@@ -20,8 +20,9 @@ import pydantic
 
 
 class GrandparentModel(pydantic.BaseModel):
-    grandparent_field: str
-    """This field is inherited from a grandparent model."""
+    grandparent_field: str = pydantic.Field(
+        description="This field is inherited from a grandparent model.",
+    )
 
 
 class ParentModel(GrandparentModel):
