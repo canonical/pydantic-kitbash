@@ -19,7 +19,18 @@ from typing import Literal
 import pydantic
 
 
-class MockModel(pydantic.BaseModel):
+class GrandparentModel(pydantic.BaseModel):
+    grandparent_field: str = pydantic.Field(
+        description="This field is inherited from a grandparent model.",
+    )
+
+
+class ParentModel(GrandparentModel):
+    parent_field: str
+    """This field is inherited from a parent model."""
+
+
+class MockModel(ParentModel):
     mock_field: Literal["val1", "val2"] = pydantic.Field(
         description="description",
         examples=["val1", "val2"],

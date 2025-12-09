@@ -12,7 +12,7 @@
 # License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License along with
-# this program.  If not, see <http://www.gnu.org/licenses/>.
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 import enum
 import typing
@@ -154,42 +154,52 @@ This is the key description
 """
 
 
-def test_get_pydantic_model(fake_field_directive):
+def test_get_pydantic_model():
     """Test for get_pydantic_model with valid input."""
 
     module = import_module("tests.unit.conftest")
     expected = module.MockModel
-    actual = get_pydantic_model(fake_field_directive)
+    actual = get_pydantic_model("", "tests.unit.conftest.MockModel", "")
 
     assert type(expected) is type(actual)
 
 
-@pytest.mark.parametrize(
-    "fake_field_directive",
-    [{"arguments": ["MockFieldModel", "mock_field"]}],
-    indirect=True,
-)
-def test_get_pydantic_model_with_module(fake_field_directive):
+def test_get_pydantic_model_with_module():
     """Test for get_pydantic_model when py:module is set."""
     module = import_module("tests.unit.conftest")
     expected = module.MockModel
 
-    fake_field_directive.env.ref_context["py:module"] = fake_field_directive.__module__
-    actual = get_pydantic_model(fake_field_directive)
+    actual = get_pydantic_model("tests.unit.conftest", "MockFieldModel", "mock_field")
 
     assert type(expected) is type(actual)
 
 
-@pytest.mark.parametrize(
-    "fake_model_directive", [{"model": ".OopsNoModel"}], indirect=True
-)
-def test_kitbash_model_invalid(fake_model_directive):
-    """Test for get_pydantic_model with invalid input."""
+def test_get_pydantic_model_bad_import():
+    """Test for get_pydantic_model when passes a nonexistent module."""
 
     with pytest.raises(
-        TypeError, match="OopsNoModel is not a subclass of pydantic.BaseModel"
+        ImportError,
+        match="Module 'this.does.not.exist' does not exist or cannot be imported.",
     ):
-        fake_model_directive.run()
+        get_pydantic_model("this.does.not.exist", "", "")
+
+
+def test_get_pydantic_model_nonexistent_model():
+    """Test for get_pydantic_model when passes a nonexistent class."""
+
+    with pytest.raises(
+        AttributeError, match="Module 'tests.unit.conftest' has no model 'DoesNotExist'"
+    ):
+        get_pydantic_model("tests.unit.conftest", "DoesNotExist", "")
+
+
+def test_get_pydantic_model_invalid_class():
+    """Test for get_pydantic_model when passes a non-Model class."""
+
+    with pytest.raises(
+        TypeError, match="'OopsNoModel' is not a subclass of pydantic.BaseModel"
+    ):
+        get_pydantic_model("tests.unit.conftest", "OopsNoModel", "")
 
 
 def test_find_fieldinfo():

@@ -42,7 +42,7 @@ LIST_TABLE_RST = """
 def test_kitbash_field_invalid(fake_field_directive):
     """Test for KitbashFieldDirective when passed a nonexistent field."""
 
-    with pytest.raises(ValueError, match="Could not find field: i_dont_exist"):
+    with pytest.raises(AttributeError, match="Could not find field 'i_dont_exist'"):
         fake_field_directive.run()
 
 

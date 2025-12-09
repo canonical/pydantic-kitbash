@@ -12,7 +12,7 @@
 # License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License along with
-# this program.  If not, see <http://www.gnu.org/licenses/>.
+# this program. If not, see <http://www.gnu.org/licenses/>.
 
 """Define core functions of pydantic-kitbash directives.
 
@@ -113,11 +113,11 @@ class KitbashFieldDirective(SphinxDirective):
             list[nodes.Node]: Well-formed list of nodes to render into field entry.
 
         """
-        pydantic_model = get_pydantic_model(self)
-
-        # exit if provided field name is not present in the model
-        if self.arguments[1] not in pydantic_model.__annotations__:
-            raise ValueError(f"Could not find field: {self.arguments[1]}")
+        pydantic_model = get_pydantic_model(
+            self.env.ref_context.get("py:module", ""),
+            self.arguments[0],
+            self.arguments[1],
+        )
 
         field_entry = FieldEntry(self.arguments[1], self)
 
@@ -233,15 +233,17 @@ class KitbashModelDirective(SphinxDirective):
             list[nodes.Node]: Well-formed list of nodes to render into field entries.
 
         """
-        pydantic_model = get_pydantic_model(self)
+        # Get the target model, specified by `self.arguments[0]`
+        py_module = self.env.ref_context.get("py:module", "")
+        target_model = get_pydantic_model(py_module, self.arguments[0], "")
 
         class_node: list[nodes.Node] = []
 
         # User-provided description overrides model docstring
         if self.content:
             class_node += parse_rst_description("\n".join(self.content), self)
-        elif pydantic_model.__doc__ and "skip-description" not in self.options:
-            class_node += parse_rst_description(pydantic_model.__doc__, self)
+        elif target_model.__doc__ and "skip-description" not in self.options:
+            class_node += parse_rst_description(target_model.__doc__, self)
 
         # Check if user provided a list of deprecated fields to include
         include_deprecated = [
@@ -249,7 +251,10 @@ class KitbashModelDirective(SphinxDirective):
             for field in self.options.get("include-deprecated", "").split(",")
         ]
 
-        for field in pydantic_model.__annotations__:
+        for field in target_model.model_fields:
+            # Get the source model for the field
+            pydantic_model = get_pydantic_model(py_module, self.arguments[0], field)
+
             deprecation_warning = (
                 is_deprecated(pydantic_model, field)
                 if not field.startswith(("_", "model_"))
@@ -343,29 +348,52 @@ class KitbashModelDirective(SphinxDirective):
 
 
 def get_pydantic_model(
-    directive: KitbashFieldDirective | KitbashModelDirective,
+    py_module: str,
+    model_name: str,
+    field_name: str,
 ) -> type[BaseModel]:
     """Import the model specified by the given directive's arguments.
 
     Args:
-        directive (KitbashFieldDirective | KitbashModelDirective): Calling directive.
+        py_module (str): The python module declared by py:currentmodule
+        model_name (str): The model name passed from the directive (<directive>.arguments[0])
+        field_name (str): The field name passed from the directive (<directive.arguments[1])
 
     Returns:
         type[pydantic.BaseModel]
 
     """
-    py_module = directive.env.ref_context.get("py:module", "")
-    model_path = (
-        f"{py_module}.{directive.arguments[0]}" if py_module else directive.arguments[0]
-    )
+    model_path = f"{py_module}.{model_name}" if py_module else model_name
+
     module_str, class_str = model_path.rsplit(".", maxsplit=1)
-    module = importlib.import_module(module_str)
+    try:
+        module = importlib.import_module(module_str)
+    except ModuleNotFoundError:
+        raise ImportError(
+            f"Module '{module_str}' does not exist or cannot be imported."
+        )
+
+    if not hasattr(module, class_str):
+        raise AttributeError(f"Module '{module_str}' has no model '{class_str}'")
+
     pydantic_model = getattr(module, class_str)
 
     if not isinstance(pydantic_model, type) or not issubclass(
         pydantic_model, BaseModel
     ):
-        raise TypeError(f"{class_str} is not a subclass of pydantic.BaseModel")
+        raise TypeError(f"'{class_str}' is not a subclass of pydantic.BaseModel")
+
+    if field_name:
+        if field_name not in pydantic_model.model_fields:
+            raise AttributeError(f"Could not find field '{field_name}'")
+
+        for cls in pydantic_model.__mro__:
+            if (
+                issubclass(cls, BaseModel)
+                and hasattr(cls, "__annotations__")
+                and field_name in cls.__annotations__
+            ):
+                pydantic_model = cls
 
     return pydantic_model
 
