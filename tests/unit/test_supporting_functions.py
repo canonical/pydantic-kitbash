@@ -185,7 +185,7 @@ def test_get_pydantic_model_bad_import():
 
 
 def test_get_pydantic_model_nonexistent_model():
-    """Test for get_pydantic_model when passes a non-Model class."""
+    """Test for get_pydantic_model when passes a nonexistent class."""
 
     with pytest.raises(
         AttributeError, match="Module 'tests.unit.conftest' has no model 'DoesNotExist'"
