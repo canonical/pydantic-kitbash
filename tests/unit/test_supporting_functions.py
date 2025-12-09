@@ -175,7 +175,7 @@ def test_get_pydantic_model_with_module():
 
 
 def test_get_pydantic_model_bad_import():
-    """Test for get_pydantic_model when passes a non-Model class."""
+    """Test for get_pydantic_model when passes a nonexistent module."""
 
     with pytest.raises(
         ImportError,
