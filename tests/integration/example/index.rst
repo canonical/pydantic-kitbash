@@ -52,6 +52,14 @@ Field directive
 .. kitbash-field:: MockModel parent_field
 
 
+.. Test description override
+
+.. kitbash-field:: MockModel override_test
+    :override-description:
+
+    This is the override.
+
+
 Model directive
 ---------------
 

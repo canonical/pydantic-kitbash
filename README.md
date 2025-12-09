@@ -33,6 +33,19 @@ unhelpful.
     :skip-examples:
 ```
 
+#### `override-description`
+
+Replaces the field's description with the directive content. Use this to modify
+field descriptions inherited from libraries.
+
+```rst
+.. kitbash-field:: upstream_model my_field
+    :override-description
+
+    This text replaces the field's description.
+
+```
+
 #### `override-type`
 
 Overrides the field's type on the page. Use this when the type is overly verbose,

@@ -18,6 +18,7 @@ import pytest
 from docutils import nodes
 from docutils.core import publish_doctree
 from pydantic_kitbash.directives import strip_whitespace
+from sphinx.errors import ExtensionError
 
 LIST_TABLE_RST = """
 
@@ -157,6 +158,60 @@ def test_kitbash_field_content(fake_field_directive):
     actual = fake_field_directive.run()[0]
 
     assert str(expected) == str(actual)
+
+
+@pytest.mark.parametrize(
+    "fake_field_directive",
+    [{"options": {"override-description": None}, "content": ["*new description*"]}],
+    indirect=True,
+)
+def test_kitbash_field_override_description(fake_field_directive):
+    """Test for KitbashFieldDirective when content is provided."""
+
+    expected = nodes.section(ids=["test", "docname-test"])
+    expected["classes"].append("kitbash-entry")
+    title_node = nodes.title(text="test")
+    expected += title_node
+    target_node = nodes.target()
+    target_node["refid"] = "docname-test"
+    expected += target_node
+
+    field_entry = """\
+
+    .. important::
+
+        Deprecated. ew.
+
+    **Type**
+
+    ``int``
+
+    **Description**
+
+    *new description*
+
+    """
+
+    field_entry = strip_whitespace(field_entry)
+    expected += publish_doctree(field_entry).children
+    actual = fake_field_directive.run()[0]
+
+    assert str(expected) == str(actual)
+
+
+@pytest.mark.parametrize(
+    "fake_field_directive",
+    [{"options": {"override-description": None}}],
+    indirect=True,
+)
+def test_kitbash_field_override_description_no_content(fake_field_directive):
+    """Test for KitbashFieldDirective when content is provided."""
+
+    with pytest.raises(
+        ExtensionError,
+        match="Directive content must be included alongside the 'override-description' option.",
+    ):
+        fake_field_directive.run()
 
 
 @pytest.mark.parametrize(
