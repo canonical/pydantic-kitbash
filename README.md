@@ -87,6 +87,20 @@ to `dev-my-field`:
     :label: dev-my-field
 ```
 
+### Directive content
+
+By default, directive content is appended to the description. Use this to provide
+additional context or information on fields sourced from libraries.
+
+```rst
+.. kitbash-field:: my_model my_field
+
+    This is appended to the field's description.
+```
+
+If the `override-description` option is included, the directive content will replace the
+entire field description.
+
 ## Project setup
 
 Kitbash is published on PyPI and can be installed with:
