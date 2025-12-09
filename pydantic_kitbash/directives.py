@@ -233,16 +233,17 @@ class KitbashModelDirective(SphinxDirective):
             list[nodes.Node]: Well-formed list of nodes to render into field entries.
 
         """
+        # Get the target model, specified by `self.arguments[0]`
         py_module = self.env.ref_context.get("py:module", "")
-        pydantic_model = get_pydantic_model(py_module, self.arguments[0], "")
+        target_model = get_pydantic_model(py_module, self.arguments[0], "")
 
         class_node: list[nodes.Node] = []
 
         # User-provided description overrides model docstring
         if self.content:
             class_node += parse_rst_description("\n".join(self.content), self)
-        elif pydantic_model.__doc__ and "skip-description" not in self.options:
-            class_node += parse_rst_description(pydantic_model.__doc__, self)
+        elif target_model.__doc__ and "skip-description" not in self.options:
+            class_node += parse_rst_description(target_model.__doc__, self)
 
         # Check if user provided a list of deprecated fields to include
         include_deprecated = [
@@ -250,7 +251,8 @@ class KitbashModelDirective(SphinxDirective):
             for field in self.options.get("include-deprecated", "").split(",")
         ]
 
-        for field in pydantic_model.model_fields:
+        for field in target_model.model_fields:
+            # Get the source model for the field
             pydantic_model = get_pydantic_model(py_module, self.arguments[0], field)
 
             deprecation_warning = (
@@ -353,7 +355,7 @@ def get_pydantic_model(
     """Import the model specified by the given directive's arguments.
 
     Args:
-        py_module (str): The python module declared by pu:currentmodule
+        py_module (str): The python module declared by py:currentmodule
         model_name (str): The model name passed from the directive (<directive>.arguments[0])
         field_name (str): The field name passed from the directive (<directive.arguments[1])
 
