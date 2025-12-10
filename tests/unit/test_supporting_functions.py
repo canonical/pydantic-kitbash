@@ -503,6 +503,10 @@ def test_format_type_string():
     assert format_type_string("dict[idk.man.str, typing.Any]") == "dict[str, Any]"
     assert format_type_string(object_type) == "MockObject"
     assert format_type_string(list_type) == "Literal['val1', 'val2', 'val3']"
+    assert (
+        format_type_string("typing.Literal['foo@1.0', 'foo@1.1']")
+        == "Literal['foo@1.0', 'foo@1.1']"
+    )
 
 
 def test_get_optional_annotated_field_data_no_annotation(fake_field_directive):

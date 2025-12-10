@@ -43,7 +43,7 @@ from typing_extensions import override
 LITERAL_LIST_EXPR = re.compile(r"Literal\[(.*?)\]")
 LIST_ITEM_EXPR = re.compile(r"'([^']*)'")
 TYPE_STR_EXPR = re.compile(r"<[^ ]+ '([^']+)'>")
-MODULE_PREFIX_EXPR = re.compile(r"\b(?:\w+\.)+(\w+)")
+MODULE_PREFIX_EXPR = re.compile(r"\b(?:[A-Za-z_]\w*\.)+([A-Za-z_]\w*)")
 
 
 class FieldEntry:
