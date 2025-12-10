@@ -15,6 +15,7 @@
 # this program. If not, see <http://www.gnu.org/licenses/>.
 
 import enum
+import re
 import typing
 from importlib import import_module
 from typing import Annotated, TypeVar
@@ -25,6 +26,7 @@ import yaml
 from docutils import nodes
 from docutils.core import publish_doctree
 from pydantic_kitbash.directives import (
+    MODULE_PREFIX_EXPR,
     FieldEntry,
     build_examples_block,
     create_field_node,
@@ -489,6 +491,39 @@ def test_strip_whitespace():
     assert strip_whitespace(docstring1) == expected
     assert strip_whitespace(docstring2) == expected
     assert strip_whitespace(None) == ""
+
+
+@pytest.mark.parametrize(
+    ("type_str"),
+    [
+        pytest.param("foo.bar"),
+        pytest.param("Foo.Bar"),
+        pytest.param("Foo1.bar"),
+        pytest.param("_foo.bar"),
+        pytest.param("foo.bar1"),
+        pytest.param("foo._bar"),
+    ],
+)
+def test_module_prefix_regex_match(type_str):
+    """Test strings that match against the regex for Python module paths."""
+    assert re.match(MODULE_PREFIX_EXPR, type_str)
+
+
+@pytest.mark.parametrize(
+    ("type_str"),
+    [
+        pytest.param("foo"),
+        pytest.param("foo."),
+        pytest.param(".foo"),
+        pytest.param("1foo.bar"),
+        pytest.param("foo.1bar"),
+        pytest.param("foo@bar.baz"),
+        pytest.param("foo-bar.foo-baz"),
+    ],
+)
+def test_module_prefix_regex_no_match(type_str):
+    """Test strings that don't match against the regex for Python module paths."""
+    assert not re.match(MODULE_PREFIX_EXPR, type_str)
 
 
 def test_format_type_string():
