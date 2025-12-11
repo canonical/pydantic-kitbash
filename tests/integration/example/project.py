@@ -31,7 +31,7 @@ class ParentModel(GrandparentModel):
 
 
 class MockModel(ParentModel):
-    mock_field: Literal["val1", "val2"] = pydantic.Field(
+    mock_field: Literal["foo@52.04", "foo@54.04"] = pydantic.Field(
         description="description",
         examples=["val1", "val2"],
         alias="test",

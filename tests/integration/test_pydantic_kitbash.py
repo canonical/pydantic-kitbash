@@ -89,7 +89,7 @@ def test_pydantic_kitbash_integration(example_project):
         field_prefix = type_literal_block.previous_sibling
         field_type = getattr(type_literal_block, "text", None)
         assert field_prefix == "One of: "
-        assert field_type == "['val1', 'val2']"
+        assert field_type == "['foo@52.04', 'foo@54.04']"
     else:
         pytest.fail("Type not found in rendered output")
 
