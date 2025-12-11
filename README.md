@@ -35,12 +35,12 @@ unhelpful.
 
 #### `override-description`
 
-Replaces the field's description with the directive content. Use this to modify
-field descriptions inherited from libraries.
+Replaces the field's description with the directive content instead of appending to it.
+Use this to modify field descriptions inherited from libraries.
 
 ```rst
 .. kitbash-field:: upstream_model my_field
-    :override-description
+    :override-description:
 
     This text replaces the field's description.
 
@@ -96,6 +96,7 @@ additional context or information on fields sourced from libraries.
 .. kitbash-field:: my_model my_field
 
     This is appended to the field's description.
+
 ```
 
 If the `override-description` option is included, the directive content will replace the
