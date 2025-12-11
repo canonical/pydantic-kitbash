@@ -170,7 +170,7 @@ class KitbashFieldDirective(SphinxDirective):
         elif self.content:  # append directive content to description
             supplemental_description = "\n".join(self.content)
             field_entry.description = (
-                # Need to dedent description before appending directive content so that
+                # Dedent description before appending directive content so that
                 # it doesn't set the lowest indentation level.
                 f"{inspect.cleandoc(field_entry.description)}\n\n{supplemental_description}"
                 if field_entry.description
