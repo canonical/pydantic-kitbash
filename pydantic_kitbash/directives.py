@@ -36,6 +36,7 @@ from docutils.parsers.rst import Parser, directives
 from docutils.utils import new_document
 from pydantic import AfterValidator, BaseModel, BeforeValidator
 from pydantic.fields import FieldInfo
+from sphinx.errors import ExtensionError
 from sphinx.util.docutils import SphinxDirective
 from typing_extensions import override
 
@@ -96,6 +97,7 @@ class KitbashFieldDirective(SphinxDirective):
 
     option_spec = {
         "skip-examples": directives.flag,
+        "override-description": directives.flag,
         "override-type": directives.unchanged,
         "prepend-name": directives.unchanged,
         "append-name": directives.unchanged,
@@ -157,8 +159,15 @@ class KitbashFieldDirective(SphinxDirective):
             pydantic_model, field_entry.name
         )
 
-        # Append directive content to description
-        if self.content:
+        if (
+            "override-description" in self.options
+        ):  # replace description with directive content
+            if not self.content:
+                raise ExtensionError(
+                    "Directive content must be included alongside the 'override-description' option."
+                )
+            field_entry.description = "\n".join(self.content)
+        elif self.content:  # append directive content to description
             supplemental_description = "\n".join(self.content)
             field_entry.description = (
                 f"{field_entry.description}\n\n{supplemental_description}"

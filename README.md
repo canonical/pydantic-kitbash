@@ -33,6 +33,19 @@ unhelpful.
     :skip-examples:
 ```
 
+#### `override-description`
+
+Replaces the field's description with the directive content instead of appending to it.
+Use this to modify field descriptions inherited from libraries.
+
+```rst
+.. kitbash-field:: upstream_model my_field
+    :override-description:
+
+    This text replaces the field's description.
+
+```
+
 #### `override-type`
 
 Overrides the field's type on the page. Use this when the type is overly verbose,
@@ -73,6 +86,21 @@ to `dev-my-field`:
 .. kitbash-field:: my_model my_field
     :label: dev-my-field
 ```
+
+### Directive content
+
+By default, directive content is appended to the description. Use this to provide
+additional context or information on fields sourced from libraries.
+
+```rst
+.. kitbash-field:: my_model my_field
+
+    This is appended to the field's description.
+
+```
+
+If the `override-description` option is included, the directive content will replace the
+entire field description.
 
 ## Project setup
 

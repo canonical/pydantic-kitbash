@@ -55,3 +55,6 @@ class MockModel(ParentModel):
               lines"""
         ],
     )
+
+    override_test: str
+    """Override me."""
