@@ -58,3 +58,8 @@ class MockModel(ParentModel):
 
     override_test: str
     """Override me."""
+
+    docstring_whitespace: str
+    """This docstring contains
+
+    blank lines."""

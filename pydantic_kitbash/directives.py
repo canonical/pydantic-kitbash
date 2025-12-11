@@ -170,7 +170,9 @@ class KitbashFieldDirective(SphinxDirective):
         elif self.content:  # append directive content to description
             supplemental_description = "\n".join(self.content)
             field_entry.description = (
-                f"{field_entry.description}\n\n{supplemental_description}"
+                # Need to dedent description before appending directive content so that
+                # it doesn't set the lowest indentation level.
+                f"{inspect.cleandoc(field_entry.description)}\n\n{supplemental_description}"
                 if field_entry.description
                 else supplemental_description
             )
@@ -858,38 +860,9 @@ def parse_rst_description(
     settings = directive.state.document.settings
     rst_doc = new_document(directive.env.docname, settings=settings)
     rst_parser = Parser()
-    rst_parser.parse(strip_whitespace(rst_desc), rst_doc)
+    rst_parser.parse(inspect.cleandoc(rst_desc), rst_doc)
 
     return list(rst_doc.children)
-
-
-def strip_whitespace(rst_desc: str | None) -> str:
-    """Strip whitespace from multiline docstrings.
-
-    Dedents whitespace from docstrings so that it can be successfully
-    parsed as reStructuredText.
-
-    Args:
-        rst_desc (str): An indented Python docstring.
-
-    Returns:
-        str: A properly dedented string that can be parsed as rST
-
-    """
-    if rst_desc:
-        # This is used instead of textwrap.dedent() to account for
-        # docstrings starting with the line continuation character.
-        lines = rst_desc.splitlines()
-        first_line = lines[0]
-        remaining_lines = lines[1:]
-
-        dedented_remaining_lines = textwrap.dedent(
-            "\n".join(remaining_lines)
-        ).splitlines()
-
-        return "\n".join([first_line.strip(), *dedented_remaining_lines])
-
-    return ""
 
 
 def format_type_string(type_str: type[object] | Any) -> str:  # noqa: ANN401

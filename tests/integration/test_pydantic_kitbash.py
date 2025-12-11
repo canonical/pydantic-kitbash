@@ -31,7 +31,7 @@ def get_field_description(
     desc = bs4.element.PageElement()
     if field_entry:
         field_contents = field_entry.find_all_next("p")
-        return field_contents[3]
+        return field_contents[idx]
 
     return desc
 
@@ -144,4 +144,18 @@ def test_pydantic_kitbash_integration(example_project):
     assert (
         getattr(get_field_description("override_test", 3, soup), "text", None)
         == "This is the override."
+    )
+
+    # Check that directive content doesn't affect paragraph indentation.
+    assert (
+        getattr(get_field_description("docstring_whitespace", 3, soup), "text", None)
+        == "This docstring contains"
+    )
+    assert (
+        getattr(get_field_description("docstring_whitespace", 4, soup), "text", None)
+        == "blank lines."
+    )
+    assert (
+        getattr(get_field_description("docstring_whitespace", 5, soup), "text", None)
+        == "This should not create surprise blockquotes >:("
     )
