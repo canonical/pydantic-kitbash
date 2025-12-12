@@ -42,7 +42,6 @@ from pydantic_kitbash.directives import (
     is_deprecated,
     is_enum_type,
     parse_rst_description,
-    strip_whitespace,
 )
 
 
@@ -458,39 +457,6 @@ def test_parse_rst_description(fake_field_directive):
     # comparing strings because docutils `__eq__`
     # method compares by identity rather than state
     assert str(expected) == str(actual)
-
-
-def test_strip_whitespace():
-    """Test for strip_whitespace."""
-
-    docstring1 = """Description.
-
-      **Examples**
-
-      .. code-block:: yaml
-
-          test: passed
-
-      """
-
-    docstring2 = """\
-      Description.
-
-      **Examples**
-
-      .. code-block:: yaml
-
-          test: passed
-
-      """
-
-    expected = (
-        "Description.\n\n**Examples**\n\n.. code-block:: yaml\n\n    test: passed\n"
-    )
-
-    assert strip_whitespace(docstring1) == expected
-    assert strip_whitespace(docstring2) == expected
-    assert strip_whitespace(None) == ""
 
 
 @pytest.mark.parametrize(

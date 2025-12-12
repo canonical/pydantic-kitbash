@@ -60,6 +60,13 @@ Field directive
     This is the override.
 
 
+.. Test docstring paragraph rendering with directive content.
+
+.. kitbash-field:: MockModel docstring_whitespace
+
+    This should not create surprise blockquotes >:(
+
+
 Model directive
 ---------------
 

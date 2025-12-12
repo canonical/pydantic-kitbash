@@ -14,10 +14,11 @@
 # You should have received a copy of the GNU Lesser General Public License along with
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import inspect
+
 import pytest
 from docutils import nodes
 from docutils.core import publish_doctree
-from pydantic_kitbash.directives import strip_whitespace
 from sphinx.errors import ExtensionError
 
 LIST_TABLE_RST = """
@@ -74,7 +75,7 @@ def test_kitbash_field(fake_field_directive):
 
     """
 
-    field_entry = strip_whitespace(field_entry)
+    field_entry = inspect.cleandoc(field_entry)
     expected += publish_doctree(field_entry).children
     actual = fake_field_directive.run()[0]
 
@@ -114,7 +115,7 @@ def test_kitbash_field_py_module(fake_field_directive):
 
     """
 
-    field_entry = strip_whitespace(field_entry)
+    field_entry = inspect.cleandoc(field_entry)
     expected += publish_doctree(field_entry).children
     actual = fake_field_directive.run()[0]
 
@@ -153,7 +154,7 @@ def test_kitbash_field_content(fake_field_directive):
 
     """
 
-    field_entry = strip_whitespace(field_entry)
+    field_entry = inspect.cleandoc(field_entry)
     expected += publish_doctree(field_entry).children
     actual = fake_field_directive.run()[0]
 
@@ -192,7 +193,7 @@ def test_kitbash_field_override_description(fake_field_directive):
 
     """
 
-    field_entry = strip_whitespace(field_entry)
+    field_entry = inspect.cleandoc(field_entry)
     expected += publish_doctree(field_entry).children
     actual = fake_field_directive.run()[0]
 
@@ -242,7 +243,7 @@ def test_kitbash_field_content_no_desc(fake_field_directive):
 
     """
 
-    field_entry = strip_whitespace(field_entry)
+    field_entry = inspect.cleandoc(field_entry)
     expected += publish_doctree(field_entry).children
     actual = fake_field_directive.run()[0]
 
@@ -279,7 +280,7 @@ def test_kitbash_field_prepend_name(fake_field_directive):
 
     """
 
-    field_entry = strip_whitespace(field_entry)
+    field_entry = inspect.cleandoc(field_entry)
     expected += publish_doctree(field_entry).children
     actual = fake_field_directive.run()[0]
 
@@ -316,7 +317,7 @@ def test_kitbash_field_append_name(fake_field_directive):
 
     """
 
-    field_entry = strip_whitespace(field_entry)
+    field_entry = inspect.cleandoc(field_entry)
     expected += publish_doctree(field_entry).children
     actual = fake_field_directive.run()[0]
 
@@ -353,7 +354,7 @@ def test_kitbash_field_override_type(fake_field_directive):
 
     """
 
-    field_entry = strip_whitespace(field_entry)
+    field_entry = inspect.cleandoc(field_entry)
     expected += publish_doctree(field_entry).children
     actual = fake_field_directive.run()[0]
 
@@ -390,7 +391,7 @@ def test_kitbash_field_label_option(fake_field_directive):
 
     """
 
-    field_entry = strip_whitespace(field_entry)
+    field_entry = inspect.cleandoc(field_entry)
     expected += publish_doctree(field_entry).children
     actual = fake_field_directive.run()[0]
 
@@ -425,7 +426,7 @@ def test_kitbash_field_skip_examples(fake_field_directive):
 
     """
 
-    field_entry = strip_whitespace(field_entry)
+    field_entry = inspect.cleandoc(field_entry)
     expected += publish_doctree(field_entry).children
     actual = fake_field_directive.run()[0]
 
@@ -462,7 +463,7 @@ def test_kitbash_field_enum(fake_field_directive):
 
     """
 
-    field_entry = strip_whitespace(field_entry)
+    field_entry = inspect.cleandoc(field_entry)
     expected += publish_doctree(field_entry).children
     table_container = nodes.container()
     table_container += publish_doctree(LIST_TABLE_RST).children
@@ -500,7 +501,7 @@ def test_kitbash_field_union_type(fake_field_directive):
 
     """
 
-    field_entry = strip_whitespace(field_entry)
+    field_entry = inspect.cleandoc(field_entry)
     expected += publish_doctree(field_entry).children
     actual = fake_field_directive.run()[0]
 
@@ -537,7 +538,7 @@ def test_kitbash_field_enum_union(fake_field_directive):
 
     """
 
-    field_entry = strip_whitespace(field_entry)
+    field_entry = inspect.cleandoc(field_entry)
     expected += publish_doctree(field_entry).children
     table_container = nodes.container()
     table_container += publish_doctree(LIST_TABLE_RST).children
@@ -576,7 +577,7 @@ def test_kitbash_field_typing_union(fake_field_directive):
 
     """
 
-    field_entry = strip_whitespace(field_entry)
+    field_entry = inspect.cleandoc(field_entry)
     expected += publish_doctree(field_entry).children
     actual = fake_field_directive.run()[0]
 
