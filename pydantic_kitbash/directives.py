@@ -405,6 +405,7 @@ def get_pydantic_model(
                 and field_name in cls.__annotations__
             ):
                 pydantic_model = cls
+                break
 
     return pydantic_model
 

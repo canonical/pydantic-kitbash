@@ -29,6 +29,9 @@ class ParentModel(GrandparentModel):
     parent_field: str
     """This field is inherited from a parent model."""
 
+    base: str
+    """This has looser constraints."""
+
 
 class MockModel(ParentModel):
     mock_field: Literal["foo@52.04", "foo@54.04"] = pydantic.Field(
@@ -55,6 +58,9 @@ class MockModel(ParentModel):
               lines"""
         ],
     )
+
+    base: str
+    """This is from the subclass and takes precedence over the ParentModel.base field."""
 
     override_test: str
     """Override me."""

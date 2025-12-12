@@ -132,6 +132,7 @@ def test_pydantic_kitbash_integration(example_project):
         == "This field has no other description."
     )
 
+    # Ensure that inherited fields are pulled from the correct model
     assert (
         getattr(get_field_description("parent_field", 3, soup), "text", None)
         == "This field is inherited from a parent model."
@@ -140,7 +141,12 @@ def test_pydantic_kitbash_integration(example_project):
         getattr(get_field_description("grandparent_field", 3, soup), "text", None)
         == "This field is inherited from a grandparent model."
     )
+    assert (
+        getattr(get_field_description("base", 3, soup), "text", None)
+        == "This is from the subclass and takes precedence over the ParentModel.base field."
+    )
 
+    # Test description override
     assert (
         getattr(get_field_description("override_test", 3, soup), "text", None)
         == "This is the override."
