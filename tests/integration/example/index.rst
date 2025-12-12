@@ -51,6 +51,10 @@ Field directive
 
 .. kitbash-field:: MockModel parent_field
 
+.. kitbash-field:: MockModel grandparent_field
+
+.. kitbash-field:: MockModel base
+
 
 .. Test description override
 

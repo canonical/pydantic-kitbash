@@ -22,6 +22,12 @@ from typing import cast
 import bs4
 import pytest
 
+DESC_INDEX = 3
+"""\
+The index of the first description paragraph, given the current node structure for
+entries.
+"""
+
 
 def get_field_description(
     field_id: str, idx: int, soup: bs4.BeautifulSoup
@@ -102,12 +108,12 @@ def test_pydantic_kitbash_integration(example_project):
     )
 
     # Ensure that the internal reference from the field's description was created
-    assert get_field_description("xref_desc_test", 3, soup).find_next(
+    assert get_field_description("xref_desc_test", DESC_INDEX, soup).find_next(
         "span", {"class": "std std-ref"}
     )  # The description body is the third paragraph in the section
 
     # Ensure that the internal reference from the field's docstring was created
-    assert get_field_description("xref_docstring_test", 3, soup).find_next(
+    assert get_field_description("xref_docstring_test", DESC_INDEX, soup).find_next(
         "span", {"class": "std std-ref"}
     )
 
@@ -128,34 +134,54 @@ def test_pydantic_kitbash_integration(example_project):
 
     # Check that directive content renders correctly when the field description is 'None'
     assert (
-        getattr(get_field_description("no_desc", 3, soup), "text", None)
+        getattr(get_field_description("no_desc", DESC_INDEX, soup), "text", None)
         == "This field has no other description."
     )
 
+    # Ensure that inherited fields are pulled from the correct model
     assert (
-        getattr(get_field_description("parent_field", 3, soup), "text", None)
+        getattr(get_field_description("parent_field", DESC_INDEX, soup), "text", None)
         == "This field is inherited from a parent model."
     )
     assert (
-        getattr(get_field_description("grandparent_field", 3, soup), "text", None)
+        getattr(
+            get_field_description("grandparent_field", DESC_INDEX, soup), "text", None
+        )
         == "This field is inherited from a grandparent model."
     )
-
     assert (
-        getattr(get_field_description("override_test", 3, soup), "text", None)
+        getattr(get_field_description("base", DESC_INDEX, soup), "text", None)
+        == "This is from the subclass and takes precedence over the ParentModel.base field."
+    )
+
+    # Test description override
+    assert (
+        getattr(get_field_description("override_test", DESC_INDEX, soup), "text", None)
         == "This is the override."
     )
 
     # Check that directive content doesn't affect paragraph indentation.
     assert (
-        getattr(get_field_description("docstring_whitespace", 3, soup), "text", None)
+        getattr(
+            get_field_description("docstring_whitespace", DESC_INDEX, soup),
+            "text",
+            None,
+        )
         == "This docstring contains"
     )
-    assert (
-        getattr(get_field_description("docstring_whitespace", 4, soup), "text", None)
+    assert (  # DESC_INDEX + 1 is the index of the second paragraph.
+        getattr(
+            get_field_description("docstring_whitespace", DESC_INDEX + 1, soup),
+            "text",
+            None,
+        )
         == "blank lines."
     )
     assert (
-        getattr(get_field_description("docstring_whitespace", 5, soup), "text", None)
+        getattr(
+            get_field_description("docstring_whitespace", DESC_INDEX + 2, soup),
+            "text",
+            None,
+        )
         == "This should not create surprise blockquotes >:("
     )
