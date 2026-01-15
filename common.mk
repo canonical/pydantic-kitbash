@@ -1,8 +1,4 @@
-# Common items for all Starcraft Makefiles. Should only be edited in the `starbase` repository:
-# https://github.com/canonical/starbase
-
 SOURCES=$(wildcard *.py) $(PROJECT) tests
-DOCS=docs
 
 ifneq ($(OS),Windows_NT)
 	OS := $(shell uname)
@@ -49,24 +45,15 @@ help: ## Show this help.
 		}
 	}'
 
-.PHONY: setup
-setup: install-uv setup-precommit install-build-deps ## Set up a development environment
-	uv sync $(UV_TEST_GROUPS) $(UV_LINT_GROUPS) $(UV_DOCS_GROUPS)
+.PHONY: install
+install: install-uv install-linters install-precommit install-build-deps ## Set up a development environment
+	uv sync $(UV_TEST_GROUPS) $(UV_LINT_GROUPS)
 
-.PHONY: setup-tests
-setup-tests: install-uv install-build-deps ##- Set up a testing environment without linters
-	uv sync $(UV_TEST_GROUPS)
+.PHONY: install-linters
+install-linters: install-uv install-shellcheck install-pyright install-lint-build-deps
 
-.PHONY: setup-lint
-setup-lint: install-uv install-shellcheck install-pyright install-lint-build-deps  ##- Set up a linting-only environment
-	uv sync $(UV_LINT_GROUPS)
-
-.PHONY: setup-docs
-setup-docs: install-uv  ##- Set up a documentation-only environment
-	uv sync --no-dev $(UV_DOCS_GROUPS)
-
-.PHONY: setup-precommit
-setup-precommit: install-uv  ##- Set up pre-commit hooks in this repository.
+.PHONY: install-precommit
+install-precommit: install-uv  ##- Set up pre-commit hooks in this repository.
 ifeq ($(shell which pre-commit),)
 	uv tool run pre-commit install
 else
@@ -76,7 +63,7 @@ endif
 .PHONY: clean
 clean:  ## Clean up the development environment
 	uv tool run pyclean .
-	rm -rf dist/ build/ docs/_build/ .test_output/ *.snap .coverage*
+	rm -rf dist/ build/ .test_output/ .coverage*
 
 .PHONY: autoformat
 autoformat: format  # Hidden alias for 'format'
@@ -95,6 +82,14 @@ format-codespell:  ##- Fix spelling issues with codespell
 .PHONY: format-prettier
 format-prettier: install-npm  ##- Format files with prettier
 	$(PRETTIER) --write $(PRETTIER_FILES)
+
+.PHONY: setup-tests
+setup-tests: install-uv install-build-deps ##- Set up a testing environment without linters
+	uv sync $(UV_TEST_GROUPS)
+
+.PHONY: setup-lint
+setup-lint: install-uv install-shellcheck install-pyright install-lint-build-deps  ##- Set up a linting-only environment
+	uv sync $(UV_LINT_GROUPS)
 
 .PHONY: lint-ruff
 lint-ruff: install-ruff  ##- Lint with ruff
@@ -161,16 +156,6 @@ ifneq ($(CI),)
 	@echo ::endgroup::
 endif
 
-.PHONY: lint-docs
-lint-docs:  ##- Lint the documentation
-ifneq ($(CI),)
-	@echo ::group::$@
-endif
-	uv run $(UV_DOCS_GROUPS) sphinx-lint --max-line-length 88 --ignore docs/reference/commands --ignore docs/_build --enable all $(DOCS) -d missing-underscore-after-hyperlink,missing-space-in-hyperlink
-ifneq ($(CI),)
-	@echo ::endgroup::
-endif
-
 .PHONY: lint-twine
 lint-twine: pack-pip  ##- Lint Python packages with twine
 ifneq ($(CI),)
@@ -204,14 +189,6 @@ test-coverage:  ## Generate coverage report
 test-find-slow:  ##- Identify slow tests. Set cutoff time in seconds with SLOW_CUTOFF_TIME
 	uv run pytest --durations 0 --durations-min $(SLOW_CUTOFF_TIME)
 
-.PHONY: docs
-docs:  ## Build documentation
-	uv run $(UV_DOCS_GROUPS) sphinx-build -b html -W $(DOCS) $(DOCS)/_build
-
-.PHONY: docs-auto
-docs-auto:  ## Build and host docs with sphinx-autobuild
-	uv run --group docs sphinx-autobuild -b html --open-browser --port=8080 --watch $(PROJECT) -W $(DOCS) $(DOCS)/_build
-
 .PHONY: pack-pip
 pack-pip:  ##- Build packages for pip (sdist, wheel)
 ifneq ($(CI),)
@@ -222,7 +199,7 @@ ifneq ($(CI),)
 	@echo ::endgroup::
 endif
 
-# Below are intermediate targets for setup. They are not included in help as they should
+# Below are intermediate targets for install. They are not included in help as they should
 # not be used independently.
 
 .PHONY: install-uv
