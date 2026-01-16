@@ -14,7 +14,7 @@ requires-python = ">=3.10"
 
 [dependency-groups]
 lint = [
-    # Left empty for scaffolding and Makefile compatibility
+    "mypy>=1.16.0",
 ]
 types = [
     "mypy[reports]~=1.19.0",
