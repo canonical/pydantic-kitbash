@@ -51,12 +51,12 @@ def test_kitbash_field_invalid(fake_field_directive):
 def test_kitbash_field(fake_field_directive):
     """Test for KitbashFieldDirective."""
 
-    expected = nodes.section(ids=["test", "docname-test"])
+    expected = nodes.section(ids=["test", "mockfieldmodel.mock_field"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="test")
     expected += title_node
     target_node = nodes.target()
-    target_node["refid"] = "docname-test"
+    target_node["refid"] = "mockfieldmodel.mock_field"
     expected += target_node
 
     field_entry = """\
@@ -91,12 +91,12 @@ def test_kitbash_field_py_module(fake_field_directive):
     """Test for KitbashFieldDirective."""
     fake_field_directive.env.ref_context["py:module"] = fake_field_directive.__module__
 
-    expected = nodes.section(ids=["test", "docname-test"])
+    expected = nodes.section(ids=["test", "mockfieldmodel.mock_field"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="test")
     expected += title_node
     target_node = nodes.target()
-    target_node["refid"] = "docname-test"
+    target_node["refid"] = "mockfieldmodel.mock_field"
     expected += target_node
 
     field_entry = """\
@@ -128,12 +128,12 @@ def test_kitbash_field_py_module(fake_field_directive):
 def test_kitbash_field_content(fake_field_directive):
     """Test for KitbashFieldDirective when content is provided."""
 
-    expected = nodes.section(ids=["test", "docname-test"])
+    expected = nodes.section(ids=["test", "mockfieldmodel.mock_field"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="test")
     expected += title_node
     target_node = nodes.target()
-    target_node["refid"] = "docname-test"
+    target_node["refid"] = "mockfieldmodel.mock_field"
     expected += target_node
 
     field_entry = """\
@@ -169,12 +169,12 @@ def test_kitbash_field_content(fake_field_directive):
 def test_kitbash_field_override_description(fake_field_directive):
     """Test for KitbashFieldDirective when content is provided."""
 
-    expected = nodes.section(ids=["test", "docname-test"])
+    expected = nodes.section(ids=["test", "mockfieldmodel.mock_field"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="test")
     expected += title_node
     target_node = nodes.target()
-    target_node["refid"] = "docname-test"
+    target_node["refid"] = "mockfieldmodel.mock_field"
     expected += target_node
 
     field_entry = """\
@@ -223,12 +223,12 @@ def test_kitbash_field_override_description_no_content(fake_field_directive):
 def test_kitbash_field_content_no_desc(fake_field_directive):
     """Test for KitbashFieldDirective when content is provided."""
 
-    expected = nodes.section(ids=["no-desc", "docname-no-desc"])
+    expected = nodes.section(ids=["no-desc", "mockfieldmodel.no_desc"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="no-desc")
     expected += title_node
     target_node = nodes.target()
-    target_node["refid"] = "docname-no-desc"
+    target_node["refid"] = "mockfieldmodel.no_desc"
     expected += target_node
 
     field_entry = """\
@@ -256,12 +256,12 @@ def test_kitbash_field_content_no_desc(fake_field_directive):
 def test_kitbash_field_prepend_name(fake_field_directive):
     """Test for the -name options in KitbashFieldDirective."""
 
-    expected = nodes.section(ids=["prefix.test", "docname-test"])
+    expected = nodes.section(ids=["prefix.test", "mockfieldmodel.mock_field"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="prefix.test")
     expected += title_node
     target_node = nodes.target()
-    target_node["refid"] = "docname-test"
+    target_node["refid"] = "mockfieldmodel.mock_field"
     expected += target_node
 
     field_entry = """\
@@ -293,12 +293,12 @@ def test_kitbash_field_prepend_name(fake_field_directive):
 def test_kitbash_field_append_name(fake_field_directive):
     """Test for the -name options in KitbashFieldDirective."""
 
-    expected = nodes.section(ids=["test.suffix", "docname-test"])
+    expected = nodes.section(ids=["test.suffix", "mockfieldmodel.mock_field"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="test.suffix")
     expected += title_node
     target_node = nodes.target()
-    target_node["refid"] = "docname-test"
+    target_node["refid"] = "mockfieldmodel.mock_field"
     expected += target_node
 
     field_entry = """\
@@ -330,12 +330,12 @@ def test_kitbash_field_append_name(fake_field_directive):
 def test_kitbash_field_override_type(fake_field_directive):
     """Test for the override-type option in KitbashFieldDirective."""
 
-    expected = nodes.section(ids=["test", "docname-test"])
+    expected = nodes.section(ids=["test", "mockfieldmodel.mock_field"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="test")
     expected += title_node
     target_node = nodes.target()
-    target_node["refid"] = "docname-test"
+    target_node["refid"] = "mockfieldmodel.mock_field"
     expected += target_node
 
     field_entry = """\
@@ -406,12 +406,12 @@ def test_kitbash_field_label_option(fake_field_directive):
 def test_kitbash_field_skip_examples(fake_field_directive):
     """Test for the skip-examples option in KitbashFieldDirective."""
 
-    expected = nodes.section(ids=["bad_example", "docname-bad_example"])
+    expected = nodes.section(ids=["bad_example", "mockfieldmodel.bad_example"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="bad_example")
     expected += title_node
     target_node = nodes.target()
-    target_node["refid"] = "docname-bad_example"
+    target_node["refid"] = "mockfieldmodel.bad_example"
     expected += target_node
 
     field_entry = """\
@@ -441,12 +441,12 @@ def test_kitbash_field_skip_examples(fake_field_directive):
 def test_kitbash_field_enum(fake_field_directive):
     """Test for the KitbashFieldDirective when passed an enum field."""
 
-    expected = nodes.section(ids=["enum_field", "docname-enum_field"])
+    expected = nodes.section(ids=["enum_field", "mockfieldmodel.enum_field"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="enum_field")
     expected += title_node
     target_node = nodes.target()
-    target_node["refid"] = "docname-enum_field"
+    target_node["refid"] = "mockfieldmodel.enum_field"
     expected += target_node
 
     field_entry = """\
@@ -481,12 +481,12 @@ def test_kitbash_field_enum(fake_field_directive):
 def test_kitbash_field_union_type(fake_field_directive):
     """Test for the KitbashFieldDirective when passed a types.UnionType field."""
 
-    expected = nodes.section(ids=["uniontype_field", "docname-uniontype_field"])
+    expected = nodes.section(ids=["uniontype_field", "mockfieldmodel.uniontype_field"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="uniontype_field")
     expected += title_node
     target_node = nodes.target()
-    target_node["refid"] = "docname-uniontype_field"
+    target_node["refid"] = "mockfieldmodel.uniontype_field"
     expected += target_node
 
     field_entry = """\
@@ -516,12 +516,12 @@ def test_kitbash_field_union_type(fake_field_directive):
 def test_kitbash_field_enum_union(fake_field_directive):
     """Test for the KitbashFieldDirective when passed an enum UnionType field."""
 
-    expected = nodes.section(ids=["enum_uniontype", "docname-enum_uniontype"])
+    expected = nodes.section(ids=["enum_uniontype", "mockfieldmodel.enum_uniontype"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="enum_uniontype")
     expected += title_node
     target_node = nodes.target()
-    target_node["refid"] = "docname-enum_uniontype"
+    target_node["refid"] = "mockfieldmodel.enum_uniontype"
     expected += target_node
 
     field_entry = """\
@@ -557,12 +557,12 @@ def test_kitbash_field_enum_union(fake_field_directive):
 def test_kitbash_field_typing_union(fake_field_directive):
     """Test for KitbashFieldDirective when passed a typing.Union field."""
 
-    expected = nodes.section(ids=["typing_union", "docname-typing_union"])
+    expected = nodes.section(ids=["typing_union", "mockfieldmodel.typing_union"])
     expected["classes"].append("kitbash-entry")
     title_node = nodes.title(text="typing_union")
     expected += title_node
     target_node = nodes.target()
-    target_node["refid"] = "docname-typing_union"
+    target_node["refid"] = "mockfieldmodel.typing_union"
     expected += target_node
 
     field_entry = """\

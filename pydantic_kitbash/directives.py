@@ -187,10 +187,10 @@ class KitbashFieldDirective(SphinxDirective):
             None if "skip-examples" in self.options else field_entry.examples
         )
 
-        source_file = f"{self.state.document['source'].rsplit('/', maxsplit=1)[-1].removesuffix('.rst')}-"
-
+        # Default label format: <model-name>.<field-name>
         field_entry.label = self.options.get(
-            "label", f"{source_file}{field_entry.alias}"
+            "label",
+            f"{(self.arguments[0].rsplit('.', maxsplit=1)[-1]).lower()}.{self.arguments[1].lower()}",
         )
 
         # Get strings to concatenate with `field_alias`
@@ -320,10 +320,10 @@ class KitbashModelDirective(SphinxDirective):
                 elif is_enum_type(field_params.annotation):
                     get_enum_field_data(field_entry, field_params.annotation)
 
-                source_file = f"{self.state.document['source'].rsplit('/', maxsplit=1)[-1].removesuffix('.rst')}-"
-
+                # Default label format: <model-name>.<field-name>
                 field_entry.label = self.options.get(
-                    "label", f"{source_file}{field_entry.alias}"
+                    "label",
+                    f"{(self.arguments[0].rsplit('.', maxsplit=1)[-1]).lower()}.{field.lower()}",
                 )
 
                 # Get strings to concatenate with `field_alias`
