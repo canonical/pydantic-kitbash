@@ -10,7 +10,7 @@ Field directive
 
 .. Test default and manual labels
 
-:ref:`Automatic label <index-test>`
+:ref:`Automatic label <MockModel.mock_field>`
 
 .. kitbash-field:: MockModel mock_field
 
@@ -40,7 +40,7 @@ Field directive
 
     It can contain as many paragraphs of rST as you want.
 
-    :ref:`References <index-test>` work too!
+    :ref:`References <cool-beans>` work too!
 
 .. kitbash-field:: MockModel no_desc
 
