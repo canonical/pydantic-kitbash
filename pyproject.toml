@@ -14,7 +14,7 @@ requires-python = ">=3.10"
 
 [dependency-groups]
 lint = [
-    # Left empty for scaffolding and Makefile compatibility
+    "mypy>=1.16.0",
 ]
 types = [
     "mypy[reports]~=1.19.0",
@@ -23,12 +23,6 @@ types = [
     "types-PyYAML",
     "types-colorama",
     "types-setuptools",
-]
-docs = [
-    "sphinx-autobuild~=2024.2",
-    "sphinx-toolbox~=4.0",
-    "sphinx-lint~=1.0",
-    "sphinxext-rediraffe==0.3.0",
 ]
 dev = [
     "build>=0.7.0",
@@ -42,33 +36,6 @@ dev = [
     "types-setuptools",
     "bs4>=0.0.2",
 ]
-
-[tool.uv]
-constraint-dependencies = [
-    # Basic constraints to allow --resolution=lowest
-    "cffi>=1.15",
-    "iniconfig>=1.1.0",
-    "httplib2>=0.20.0",
-    "libnacl>=2.0",
-    "lxml>=5.0",
-    "markdown>=3.0",
-    "markupsafe>=2.0",
-    "oauthlib>=3.0.0",
-    "protobuf>=5.0",
-    "pynacl>=1.5",
-    "pyparsing>=3.0.0",
-    "pyproject-hooks>=1.0.0",
-    "pytz>=2020",
-    "pyyaml>=5.0",
-    "regex>=2021.11.10",
-    "setuptools>=50",
-    "sphinx-basic-ng>=1.0.0b1",
-    "tornado>=4.0",
-    "urllib3>=2.0",
-    "webencodings>=0.4.0",
-    "wheel>=0.38",
-]
-
 
 [build-system]
 requires = ["setuptools>=69.0", "setuptools_scm[toml]>=7.1"]
@@ -109,7 +76,7 @@ namespaces = false
 
 [tool.codespell]
 ignore-words-list = "buildd,crate,keyserver,comandos,ro,dedent,dedented"
-skip = ".tox,.git,build,.*_cache,__pycache__,*.tar,*.snap,*.png,./node_modules,./docs/_build,.direnv,.venv,venv,.vscode"
+skip = ".tox,.git,build,.*_cache,__pycache__,*.tar,*.snap,*.png,./node_modules,.direnv,.venv,venv,.vscode"
 quiet-level = 3
 check-filenames = true
 
@@ -172,7 +139,7 @@ strict = false
 line-length = 88
 target-version = "py310"
 src = ["pydantic_kitbash", "tests"]
-extend-exclude = ["docs"]
+extend-exclude = ["*/_version.py"]
 
 [tool.ruff.format]
 docstring-code-format = true
@@ -294,10 +261,6 @@ ignore-decorators = [ # Functions with these decorators don't have to have docst
 
 [tool.ruff.lint.pylint]
 max-args = 8
-
-[tool.ruff.lint.pep8-naming]
-# Allow Pydantic's `@validator` decorator to trigger class method treatment.
-classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**.py" = [ # Some things we want for the main project are unnecessary in tests.
