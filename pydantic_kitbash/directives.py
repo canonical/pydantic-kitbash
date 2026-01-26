@@ -20,75 +20,25 @@ Contains both of the pydantic-kitbash directives and their
 supporting functions.
 """
 
-import ast
-import enum
-import importlib
 import inspect
-import re
-import textwrap
-import warnings
 from types import UnionType
-from typing import Any, Literal, Union, cast, get_args, get_origin
+from typing import Union, get_origin
 
-import yaml
 from docutils import nodes
-from docutils.parsers.rst import Parser, directives
-from docutils.utils import new_document
-from pydantic import AfterValidator, BaseModel, BeforeValidator
-from pydantic.fields import FieldInfo
+from docutils.parsers.rst import directives
 from sphinx.errors import ExtensionError
-from sphinx.util.docutils import SphinxDirective
-from typing_extensions import override
 
-# Compiled regex patterns for type formatting
-LITERAL_LIST_EXPR = re.compile(r"Literal\[(.*?)\]")
-LIST_ITEM_EXPR = re.compile(r"'([^']*)'")
-TYPE_STR_EXPR = re.compile(r"<[^ ]+ '([^']+)'>")
-MODULE_PREFIX_EXPR = re.compile(r"\b(?:[A-Za-z_]\w*\.)+([A-Za-z_]\w*)")
-
-
-class FieldEntry:
-    """Contains any field attributes that will be displayed in directive output."""
-
-    name: str
-    parent_directive: SphinxDirective
-    alias: str
-    label: str
-    deprecation_warning: str | None
-    field_type: str | None
-    description: str | None
-    enum_values: list[list[str]] | None
-    examples: list[str] | None
-
-    def __init__(self, name: str, parent_directive: SphinxDirective) -> None:
-        self.name = name
-        self.parent_directive = parent_directive
-        self.alias = name
-        self.label = name
-        self.deprecation_warning = None
-        self.field_type = None
-        self.description = None
-        self.enum_values = None
-        self.examples = None
+from pydantic_kitbash.base import KitbashDirective
+from pydantic_kitbash.utils import (
+    format_type_string,
+    get_annotation_docstring,
+    get_pydantic_model,
+    is_deprecated,
+    is_enum_type,
+)
 
 
-@override
-class PrettyListDumper(yaml.Dumper):
-    """Custom YAML dumper for indenting lists."""
-
-    @override
-    def increase_indent(self, flow: bool = False, indentless: bool = False) -> None:
-        return super().increase_indent(flow, indentless=False)
-
-
-def str_presenter(dumper: yaml.Dumper, data: str) -> yaml.nodes.ScalarNode:
-    """Use the "|" style when presenting multiline strings."""
-    if "\n" in data:
-        return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")  # type: ignore[reportUnknownMemberType]
-    return dumper.represent_scalar("tag:yaml.org,2002:str", data)  # type: ignore[reportUnknownMemberType]
-
-
-class KitbashFieldDirective(SphinxDirective):
+class KitbashFieldDirective(KitbashDirective):
     """Define the kitbash-field directive's data and behavior."""
 
     required_arguments = 2
@@ -115,49 +65,47 @@ class KitbashFieldDirective(SphinxDirective):
             list[nodes.Node]: Well-formed list of nodes to render into field entry.
 
         """
+        self._init_fields()
+
         pydantic_model = get_pydantic_model(
             self.env.ref_context.get("py:module", ""),
             self.arguments[0],
             self.arguments[1],
         )
 
-        field_entry = FieldEntry(self.arguments[1], self)
+        self.field_name = self.arguments[1]
+        self.field_alias = self.arguments[1]
 
         # grab pydantic field data
-        field_params = pydantic_model.model_fields[field_entry.name]
+        field_params = pydantic_model.model_fields[self.field_name]
 
-        field_entry.alias = (
-            field_params.alias if field_params.alias else field_entry.name
-        )
+        self.field_alias = field_params.alias if field_params.alias else self.field_name
 
-        field_entry.description = get_annotation_docstring(
-            pydantic_model, field_entry.name
+        self.field_description = get_annotation_docstring(
+            pydantic_model, self.field_name
         )
         # Use JSON description value if docstring doesn't exist
-        field_entry.description = (
+        self.field_description = (
             field_params.description
-            if field_entry.description is None
-            else field_entry.description
+            if self.field_description is None
+            else self.field_description
         )
 
-        field_entry.examples = field_params.examples
-        field_entry.enum_values = None
+        self.field_examples = field_params.examples
 
         # if field is optional "normal" type (e.g., str | None)
         if field_params.annotation and get_origin(field_params.annotation) is UnionType:
-            get_optional_field_data(field_entry, field_params.annotation)
+            self._get_optional_field_data(field_params.annotation)
         else:
-            field_entry.field_type = format_type_string(field_params.annotation)
+            self.field_type = format_type_string(field_params.annotation)
 
         # if field is optional annotated type (e.g., VersionStr | None)
         if get_origin(field_params.annotation) is Union:
-            get_optional_annotated_field_data(field_entry, field_params.annotation)
+            self._get_optional_annotated_field_data(field_params.annotation)
         elif is_enum_type(field_params.annotation):
-            get_enum_field_data(field_entry, field_params.annotation)
+            self._get_enum_field_data(field_params.annotation)
 
-        field_entry.deprecation_warning = is_deprecated(
-            pydantic_model, field_entry.name
-        )
+        self.deprecation_warning = is_deprecated(pydantic_model, self.field_name)
 
         if (
             "override-description" in self.options
@@ -166,31 +114,23 @@ class KitbashFieldDirective(SphinxDirective):
                 raise ExtensionError(
                     "Directive content must be included alongside the 'override-description' option."
                 )
-            field_entry.description = "\n".join(self.content)
+            self.field_description = "\n".join(self.content)
         elif self.content:  # append directive content to description
             supplemental_description = "\n".join(self.content)
-            field_entry.description = (
+            self.field_description = (
                 # Dedent description before appending directive content so that
                 # it doesn't set the lowest indentation level.
-                f"{inspect.cleandoc(field_entry.description)}\n\n{supplemental_description}"
-                if field_entry.description
+                f"{inspect.cleandoc(self.field_description)}\n\n{supplemental_description}"
+                if self.field_description
                 else supplemental_description
             )
 
         # Replace type if :override-type: directive option was used
-        field_entry.field_type = self.options.get(
-            "override-type", field_entry.field_type
-        )
+        self.field_type = self.options.get("override-type", self.field_type)
 
         # Remove examples if :skip-examples: directive option was used
-        field_entry.examples = (
-            None if "skip-examples" in self.options else field_entry.examples
-        )
-
-        # Default label format: <model-name>.<field-name>
-        field_entry.label = self.options.get(
-            "label",
-            f"{(self.arguments[0].rsplit('.', maxsplit=1)[-1]).lower()}.{self.arguments[1].lower()}",
+        self.field_examples = (
+            None if "skip-examples" in self.options else self.field_examples
         )
 
         # Get strings to concatenate with `field_alias`
@@ -198,28 +138,19 @@ class KitbashFieldDirective(SphinxDirective):
         name_suffix = self.options.get("append-name", "")
 
         # Concatenate option values in the form <prefix>.{field_alias}.<suffix>
-        field_entry.alias = (
-            f"{name_prefix}.{field_entry.alias}" if name_prefix else field_entry.alias
+        self.field_alias = (
+            f"{name_prefix}.{self.field_alias}" if name_prefix else self.field_alias
         )
-        field_entry.alias = (
-            f"{field_entry.alias}.{name_suffix}" if name_suffix else field_entry.alias
-        )
-
-        # Add cross-referencing details to Sphinx's domain data
-        self.env.app.env.domaindata["std"]["labels"][field_entry.label] = (
-            self.env.docname,  # the document currently being parsed
-            field_entry.label,
-            field_entry.alias,
-        )
-        self.env.app.env.domaindata["std"]["anonlabels"][field_entry.label] = (
-            self.env.docname,
-            field_entry.label,
+        self.field_alias = (
+            f"{self.field_alias}.{name_suffix}" if name_suffix else self.field_alias
         )
 
-        return [create_field_node(field_entry)]
+        self._generate_label()
+
+        return [self._create_field_node()]
 
 
-class KitbashModelDirective(SphinxDirective):
+class KitbashModelDirective(KitbashDirective):
     """Define the kitbash-model directive's data and behavior."""
 
     required_arguments = 1
@@ -244,6 +175,8 @@ class KitbashModelDirective(SphinxDirective):
             list[nodes.Node]: Well-formed list of nodes to render into field entries.
 
         """
+        self._init_fields()
+
         # Get the target model, specified by `self.arguments[0]`
         py_module = self.env.ref_context.get("py:module", "")
         target_model = get_pydantic_model(py_module, self.arguments[0], "")
@@ -252,9 +185,9 @@ class KitbashModelDirective(SphinxDirective):
 
         # User-provided description overrides model docstring
         if self.content:
-            class_node += parse_rst_description("\n".join(self.content), self)
+            class_node += self._parse_rst_description("\n".join(self.content))
         elif target_model.__doc__ and "skip-description" not in self.options:
-            class_node += parse_rst_description(target_model.__doc__, self)
+            class_node += self._parse_rst_description(target_model.__doc__)
 
         # Check if user provided a list of deprecated fields to include
         include_deprecated = [
@@ -280,613 +213,78 @@ class KitbashModelDirective(SphinxDirective):
                 # grab pydantic field data (need desc and examples)
                 field_params = pydantic_model.model_fields[field]
 
-                field_entry = FieldEntry(field, self)
-                field_entry.deprecation_warning = deprecation_warning
-
-                field_entry.alias = (
-                    field_params.alias if field_params.alias else field_entry.name
+                self.field_name = field
+                self.field_alias = (
+                    field_params.alias if field_params.alias else self.field_name
                 )
+                self.deprecation_warning = deprecation_warning
 
-                field_entry.description = get_annotation_docstring(
-                    pydantic_model, field_entry.name
+                self.field_description = get_annotation_docstring(
+                    pydantic_model, self.field_name
                 )
                 # Use JSON description value if docstring doesn't exist
-                field_entry.description = (
+                self.field_description = (
                     field_params.description
-                    if field_entry.description is None
-                    else field_entry.description
+                    if self.field_description is None
+                    else self.field_description
                 )
 
-                field_entry.examples = field_params.examples
-                field_entry.enum_values = None
+                self.field_examples = field_params.examples
 
                 # if field is optional "normal" type (e.g., str | None)
                 if (
                     field_params.annotation
                     and get_origin(field_params.annotation) is UnionType
                 ):
-                    get_optional_field_data(field_entry, field_params.annotation)
+                    self._get_optional_field_data(field_params.annotation)
                 else:
-                    field_entry.field_type = format_type_string(field_params.annotation)
+                    self.field_type = format_type_string(field_params.annotation)
 
                 # if field is optional annotated type (e.g., `VersionStr | None`)
                 if (
                     field_params.annotation
                     and get_origin(field_params.annotation) is Union
                 ):
-                    get_optional_annotated_field_data(
-                        field_entry, field_params.annotation
-                    )
+                    self._get_optional_annotated_field_data(field_params.annotation)
                 elif is_enum_type(field_params.annotation):
-                    get_enum_field_data(field_entry, field_params.annotation)
-
-                # Default label format: <model-name>.<field-name>
-                field_entry.label = self.options.get(
-                    "label",
-                    f"{(self.arguments[0].rsplit('.', maxsplit=1)[-1]).lower()}.{field.lower()}",
-                )
+                    self._get_enum_field_data(field_params.annotation)
 
                 # Get strings to concatenate with `field_alias`
                 name_prefix = self.options.get("prepend-name", "")
                 name_suffix = self.options.get("append-name", "")
 
                 # Concatenate option values in the form <prefix>.{field_alias}.<suffix>
-                field_entry.alias = (
-                    f"{name_prefix}.{field_entry.alias}"
+                self.field_alias = (
+                    f"{name_prefix}.{self.field_alias}"
                     if name_prefix
-                    else field_entry.alias
+                    else self.field_alias
                 )
-                field_entry.alias = (
-                    f"{field_entry.alias}.{name_suffix}"
+                self.field_alias = (
+                    f"{self.field_alias}.{name_suffix}"
                     if name_suffix
-                    else field_entry.alias
+                    else self.field_alias
                 )
 
-                # Add cross-referencing details to Sphinx's domain data
-                self.env.app.env.domaindata["std"]["labels"][field_entry.label] = (
-                    self.env.docname,  # the document currently being parsed
-                    field_entry.label,
-                    field_entry.alias,
-                )
-                self.env.app.env.domaindata["std"]["anonlabels"][field_entry.label] = (
-                    self.env.docname,
-                    field_entry.label,
-                )
+                self._generate_label()
 
-                class_node.append(create_field_node(field_entry))
+                class_node.append(self._create_field_node())
+
+                # Clean up directive state between fields
+                self._clean_instance_fields()
 
         return class_node
 
-
-def get_pydantic_model(
-    py_module: str,
-    model_name: str,
-    field_name: str,
-) -> type[BaseModel]:
-    """Import the model specified by the given directive's arguments.
-
-    Args:
-        py_module (str): The python module declared by py:currentmodule
-        model_name (str): The model name passed from the directive (<directive>.arguments[0])
-        field_name (str): The field name passed from the directive (<directive.arguments[1])
-
-    Returns:
-        type[pydantic.BaseModel]
-
-    """
-    model_path = f"{py_module}.{model_name}" if py_module else model_name
-
-    module_str, class_str = model_path.rsplit(".", maxsplit=1)
-    try:
-        module = importlib.import_module(module_str)
-    except ModuleNotFoundError:
-        raise ImportError(
-            f"Module '{module_str}' does not exist or cannot be imported."
-        )
-
-    if not hasattr(module, class_str):
-        raise AttributeError(f"Module '{module_str}' has no model '{class_str}'")
-
-    pydantic_model = getattr(module, class_str)
-
-    if not isinstance(pydantic_model, type) or not issubclass(
-        pydantic_model, BaseModel
-    ):
-        raise TypeError(f"'{class_str}' is not a subclass of pydantic.BaseModel")
-
-    if field_name:
-        if field_name not in pydantic_model.model_fields:
-            raise AttributeError(f"Could not find field '{field_name}'")
-
-        for cls in pydantic_model.__mro__:
-            if (
-                issubclass(cls, BaseModel)
-                and hasattr(cls, "__annotations__")
-                and field_name in cls.__annotations__
-            ):
-                pydantic_model = cls
-                break
-
-    return pydantic_model
-
-
-def get_optional_field_data(field_entry: FieldEntry, annotation: type[Any]) -> None:
-    """Traverse the field and retrieve its type, description, and enum values.
-
-    Args:
-        field_entry (FieldEntry): Object containing field data.
-        annotation (type[Any]): Type annotation of the optional field. This field
-            may be either a standard Python type or an optional enum.
-
-    Returns:
-        None
-
-    """
-    union_args = get_args(annotation)
-    field_entry.field_type = format_type_string(union_args[0])
-    if issubclass(union_args[0], enum.Enum):
-        field_entry.description = (
-            union_args[0].__doc__
-            if field_entry.description is None
-            else field_entry.description
-        )
-        field_entry.enum_values = get_enum_values(union_args[0])
-
-
-def get_optional_annotated_field_data(
-    field_entry: FieldEntry, annotation: type[Any] | None
-) -> None:
-    """Traverse the field and retrieve its type, description, and examples.
-
-    Args:
-        field_entry (FieldEntry): Object containing field data.
-        annotation (type[Any]): Annotation of an optional annotated type field.
-
-    Returns:
-        None
-
-    """
-    if annotation:
-        annotated_type = annotation.__args__[0]
-        # weird case: optional literal list fields
-        if get_origin(annotated_type) != Literal and hasattr(
-            annotated_type, "__args__"
-        ):
-            field_entry.field_type = format_type_string(annotated_type.__args__[0])
-        metadata = getattr(annotated_type, "__metadata__", None)
-        field_annotation = find_fieldinfo(metadata)
-        if (
-            field_annotation
-            and field_entry.description is None
-            and field_entry.examples is None
-        ):
-            field_entry.description = field_annotation.description
-            field_entry.examples = field_annotation.examples
-
-
-def get_enum_field_data(field_entry: FieldEntry, annotation: type[Any] | None) -> None:
-    """Traverse the enum field and retrieve its docstring and enum values.
-
-    Args:
-        field_entry (FieldEntry): Object containing field data.
-        annotation (type[Any]): Annotation for an enum field. This does not include
-            optional enum fields, which are handled by `get_optional_field_data`.
-
-    Returns:
-        None
-
-    """
-    # Use enum class docstring if field has no docstring
-    if annotation:
-        field_entry.description = (
-            annotation.__doc__
-            if field_entry.description is None
-            else field_entry.description
-        )
-        field_entry.enum_values = get_enum_values(annotation)
-
-
-def find_fieldinfo(
-    metadata: tuple[BeforeValidator, AfterValidator, FieldInfo] | None,
-) -> FieldInfo | None:
-    """Retrieve a field's information from its metadata.
-
-    Iterate over an annotated type's metadata and return the first instance
-    of a FieldInfo object. This is to account for fields having option
-    before_validators and after_validators.
-
-    Args:
-        metadata (type[object] | None): Dictionary containing the field's metadata.
-
-    Returns:
-        FieldInfo: The Pydantic field's attribute values (description, examples, etc.)
-
-    """
-    result = None
-
-    if metadata:
-        for element in metadata:
-            if isinstance(element, FieldInfo):
-                result = element
-    else:
-        result = None
-
-    return result
-
-
-def is_deprecated(model: type[BaseModel], field: str) -> str | None:
-    """Retrieve a field's deprecation message if one exists.
-
-    Check to see whether the field's deprecated parameter is truthy or falsy.
-    If truthy, it will return the parameter's value with a standard "Deprecated."
-    prefix.
-
-    Args:
-        model (type[object]): The model containing the field a user wishes to examine.
-        field (str): The field that is checked for a deprecation value.
-
-    Returns:
-        str: Returns deprecation message if one exists. Else, returns None.
-
-    """
-    if field not in model.__annotations__:
-        raise ValueError(f"Could not find field: {field}")
-
-    field_params = model.model_fields[field]
-    warning = getattr(field_params, "deprecated", None)
-
-    if warning:
-        if isinstance(warning, str):
-            warning = f"Deprecated. {warning}"
-        else:
-            warning = "This key is deprecated."
-
-    return warning
-
-
-def is_enum_type(annotation: Any) -> bool:  # noqa: ANN401
-    """Check whether a field's type annotation is an enum.
-
-    Checks if the provided annotation is an object and if it is a subclass
-    of enum.Enum.
-
-    Args:
-        annotation (type): The field's type annotation.
-
-    Returns:
-        bool: True if the annotation is an enum. Else, false.
-
-    """
-    return isinstance(annotation, type) and issubclass(annotation, enum.Enum)
-
-
-def create_field_node(field_entry: FieldEntry) -> nodes.section:
-    """Create a section node containing all of the information for a single field.
-
-    Args:
-        field_entry (FieldEntry): Object containing all of the field's data
-
-    Returns:
-        nodes.section: A section containing well-formed output for each provided field attribute.
-
-    """
-    field_node = nodes.section(ids=[field_entry.alias, field_entry.label])
-    field_node["classes"] = ["kitbash-entry"]
-    title_node = nodes.title(text=field_entry.alias)
-    field_node += title_node
-    target_node = nodes.target()
-    target_node["refid"] = field_entry.label
-    field_node += target_node
-
-    if field_entry.deprecation_warning:
-        deprecated_node = nodes.important()
-        deprecated_node += parse_rst_description(
-            field_entry.deprecation_warning, field_entry.parent_directive
-        )
-        field_node += deprecated_node
-
-    if field_entry.field_type:
-        type_header = nodes.paragraph()
-        type_header += nodes.strong(text="Type")
-        field_node += type_header
-        type_value = nodes.paragraph()
-
-        if match := re.search(LITERAL_LIST_EXPR, str(field_entry.field_type)):
-            list_str = match.group(1)
-            list_items = str(re.findall(LIST_ITEM_EXPR, list_str))
-            type_value += nodes.Text("One of: ")
-            type_value += nodes.literal(text=list_items)
-        else:
-            type_value += nodes.literal(text=field_entry.field_type)
-
-        field_node += type_value
-
-    if field_entry.description:
-        desc_header = nodes.paragraph()
-        desc_header += nodes.strong(text="Description")
-        field_node += desc_header
-        field_node += parse_rst_description(
-            field_entry.description, field_entry.parent_directive
-        )
-
-    if field_entry.enum_values:
-        values_header = nodes.paragraph()
-        values_header += nodes.strong(text="Values")
-        field_node += values_header
-        field_node += create_table_node(
-            field_entry.enum_values, field_entry.parent_directive
-        )
-
-    if field_entry.examples:
-        examples_header = nodes.paragraph()
-        examples_header += nodes.strong(text="Examples")
-        field_node += examples_header
-        for example in field_entry.examples:
-            field_node += build_examples_block(field_entry.alias, example)
-
-    return field_node
-
-
-def build_examples_block(field_name: str, example: str) -> nodes.literal_block:
-    """Create code example with docutils literal_block.
-
-    Creates a literal_block node before populating it with a properly formatted
-    YAML string. Outputs warnings whenever invalid YAML is passed.
-
-    Args:
-        field_name (str): The name of the field.
-        example (str): The field example being formatted.
-
-    Returns:
-        nodes.literal_block: A literal block containing a well-formed YAML example.
-
-    """
-    PrettyListDumper.add_representer(str, str_presenter)
-    example = f"{field_name.rsplit('.', maxsplit=1)[-1]}: {example}"
-    if not example.endswith("\n"):
-        example = f"{example}\n"
-    try:
-        yaml_str = yaml.dump(
-            yaml.safe_load(example),
-            Dumper=PrettyListDumper,
-            default_style=None,
-            default_flow_style=False,
-            sort_keys=False,
-        )
-    except yaml.YAMLError as e:
-        warnings.warn(
-            f"Invalid YAML for field {field_name}: {e}",
-            category=UserWarning,
-            stacklevel=2,
-        )
-        yaml_str = example
-
-    yaml_str = yaml_str.rstrip("\n")
-    yaml_str = yaml_str.removesuffix("...")
-
-    examples_block = nodes.literal_block(text=yaml_str)
-    examples_block["language"] = "yaml"
-
-    return examples_block
-
-
-def create_table_node(
-    values: list[list[str]], directive: SphinxDirective
-) -> nodes.container:
-    """Create docutils table node.
-
-    Creates a container node containing a properly formatted table node.
-
-    Args:
-        values (list[list[str]]): A list of value-description pairs.
-        directive(SphinxDirective): The directive that outputs the returned nodes.
-
-    Returns:
-        nodes.container: A `div` containing a well-formed docutils table.
-
-    """
-    div_node = nodes.container()
-    table = nodes.table()
-    div_node += table
-
-    tgroup = nodes.tgroup(cols=2)
-    table += tgroup
-
-    tgroup += nodes.colspec(colwidth=50)
-    tgroup += nodes.colspec(colwidth=50)
-
-    thead = nodes.thead()
-    header_row = nodes.row()
-
-    values_entry = nodes.entry()
-    values_entry += nodes.paragraph(text="Value")
-    header_row += values_entry
-
-    desc_entry = nodes.entry()
-    desc_entry += nodes.paragraph(text="Description")
-    header_row += desc_entry
-
-    thead += header_row
-    tgroup += thead
-
-    tbody = nodes.tbody()
-    tgroup += tbody
-
-    for row in values:
-        tbody += create_table_row(row, directive)
-
-    return div_node
-
-
-def create_table_row(values: list[str], directive: SphinxDirective) -> nodes.row:
-    """Create well-formed docutils table row.
-
-    Creates a well-structured docutils table row from
-    the strings provided in values.
-
-    Args:
-        values (list[str]): A list containing a value and description.
-        directive(SphinxDirective): The directive that outputs the returned nodes.
-
-    Returns:
-        nodes.row: A table row consisting of the provided value and description.
-
-    """
-    row = nodes.row()
-
-    value_entry = nodes.entry()
-    value_p = nodes.paragraph()
-    value_p += nodes.literal(text=values[0])
-    value_entry += value_p
-    row += value_entry
-
-    desc_entry = nodes.entry()
-    desc_entry += parse_rst_description(values[1], directive)
-    row += desc_entry
-
-    return row
-
-
-def get_annotation_docstring(cls: type[object], annotation_name: str) -> str | None:
-    """Traverse class and return annotation docstring.
-
-    Traverses a class AST until it finds the provided annotation attribute. If
-    the annotation is followed by a docstring, that docstring is returned to the
-    calling function. Else, it returns none.
-
-    Args:
-        cls (type[object]): A python class.
-        annotation_name (str): The type annotation to check for a docstring.
-
-    Returns:
-        str: The docstring immediately beneath the provided type annotation.
-
-    """
-    source = inspect.getsource(cls)
-    tree = ast.parse(textwrap.dedent(source))
-
-    found = False
-    docstring = None
-
-    for node in ast.walk(tree):
-        if found:
-            if isinstance(node, ast.Expr):
-                docstring = str(cast(ast.Constant, node.value).value)
-            break
-        if (
-            isinstance(node, ast.AnnAssign)
-            and cast(ast.Name, node.target).id == annotation_name
-        ):
-            found = True
-
-    return docstring
-
-
-def get_enum_member_docstring(cls: type[object], enum_member: str) -> str | None:
-    """Traverse class and return enum member docstring.
-
-    Traverses a class AST until it finds the provided enum attribute. If the enum
-    is followed by a docstring, that docstring is returned to the calling function. Else,
-    it returns none.
-
-    Args:
-        cls (type[object]): An enum class.
-        enum_member (str): The specific enum member to retrieve the docstring from.
-
-    Returns:
-        str: The docstring directly beneath the provided enum member.
-
-    """
-    source = inspect.getsource(cls)
-    tree = ast.parse(textwrap.dedent(source))
-
-    for node in tree.body:
-        node = cast(ast.ClassDef, node)
-        for i, inner_node in enumerate(node.body):
-            if isinstance(inner_node, ast.Assign):
-                for target in inner_node.targets:
-                    if isinstance(target, ast.Name) and target.id == enum_member:
-                        docstring_node = node.body[i + 1]
-                        if isinstance(docstring_node, ast.Expr):
-                            docstring_node_value = cast(
-                                ast.Constant, docstring_node.value
-                            )
-                            return str(docstring_node_value.value)
-
-    return None
-
-
-def get_enum_values(enum_class: type[object]) -> list[list[str]]:
-    """Get enum values and docstrings.
-
-    Traverses an enum class, returning a list of tuples, where each tuple
-    contains the attribute value and its respective docstring.
-
-    Args:
-        enum_class: A python type.
-
-    Returns:
-        list[list[str]]: The enum's values and docstrings.
-
-    """
-    enum_docstrings: list[list[str]] = []
-
-    for attr, attr_value in enum_class.__dict__.items():
-        if not attr.startswith("_"):
-            docstring = get_enum_member_docstring(enum_class, attr)
-            if docstring:
-                enum_docstrings.append([f"{attr_value.value}", f"{docstring}"])
-
-    return enum_docstrings
-
-
-def parse_rst_description(
-    rst_desc: str, directive: SphinxDirective
-) -> list[nodes.Node]:
-    """Parse rST from model and field docstrings.
-
-    Creates a reStructuredText document node from the given string so that
-    the document's child nodes can be appended to the directive's output.
-    This function requires the calling directive to enable cross-references,
-    which cannot be resolved without a reference to the parent doctree.
-
-    Args:
-        rst_desc (str): string containing reStructuredText
-        directive (SphinxDirective): The directive that outputs the returned nodes.
-
-    Returns:
-        list[Node]: the docutils nodes produced by the rST
-
-    """
-    settings = directive.state.document.settings
-    rst_doc = new_document(directive.env.docname, settings=settings)
-    rst_parser = Parser()
-    rst_parser.parse(inspect.cleandoc(rst_desc), rst_doc)
-
-    return list(rst_doc.children)
-
-
-def format_type_string(type_str: type[object] | Any) -> str:  # noqa: ANN401
-    """Format a python type string.
-
-    Accepts a type string and converts it it to a more user-friendly
-    string to be displayed in the output.
-
-    Input parameter is intentionally loosely typed, as the value
-    is not important. The function only cares about the type itself.
-
-    Args:
-        type_str (type[object]): A Python type.
-
-    Returns:
-        str: A more human-friendly representation of the type.
-
-    """
-    result = ""
-
-    if type_str is not None:
-        result = re.sub(MODULE_PREFIX_EXPR, r"\1", str(type_str))
-        if type_match := re.match(TYPE_STR_EXPR, str(type_str)):
-            result = type_match.group(1).split(".")[-1]
-
-    return result
+    def _clean_instance_fields(self) -> None:
+        """Set instance fields to their default.
+
+        This is to prevent any data carrying from one field entry
+        to the next.
+        """
+        self.field_name = ""
+        self.field_alias = ""
+        self.field_description = None
+        self.field_examples = None
+        self.field_type = None
+        self.field_values = []
+        self.deprecation_warning = None
+        self.label = ""

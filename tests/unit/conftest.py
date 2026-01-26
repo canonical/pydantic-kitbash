@@ -45,6 +45,7 @@ class FakeFieldDirective(KitbashFieldDirective):
         content: StringList,
         env_root: Path,
     ):
+        super()._init_fields()
         self.name = name
         self.arguments = arguments
         self.options = options
