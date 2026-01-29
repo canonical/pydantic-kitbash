@@ -25,7 +25,8 @@ from docutils.parsers.rst import Parser
 from docutils.parsers.rst.states import RSTState, RSTStateMachine
 from docutils.statemachine import StringList
 from docutils.utils import new_document
-from pydantic_kitbash.directives import KitbashFieldDirective, KitbashModelDirective
+from pydantic_kitbash.field_directive import KitbashFieldDirective
+from pydantic_kitbash.model_directive import KitbashModelDirective
 from sphinx.environment import BuildEnvironment
 from sphinx.testing.util import SphinxTestApp
 from typing_extensions import override
