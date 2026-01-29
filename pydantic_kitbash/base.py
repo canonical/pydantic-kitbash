@@ -296,7 +296,7 @@ class KitbashDirective(SphinxDirective):
         """
         union_args = get_args(annotation)
         self.field_type = format_type_string(union_args[0])
-        if issubclass(union_args[0], enum.Enum):
+        if isinstance(union_args[0], type) and issubclass(union_args[0], enum.Enum):
             self.field_description = (
                 union_args[0].__doc__
                 if self.field_description is None

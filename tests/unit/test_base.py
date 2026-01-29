@@ -263,6 +263,17 @@ def test_parse_rst_description(fake_field_directive):
     assert str(expected) == str(actual)
 
 
+def test_get_optional_field_data_no_op(fake_field_directive):
+    class FakeModel(pydantic.BaseModel):
+        primitives: int | str
+        generic_primitive: list[str]
+        generic_union: list[str] | list[int]
+        annotated: list[Annotated[dict, str], "Annotation"] | None
+
+    for field in FakeModel.model_fields.values():
+        fake_field_directive._get_optional_field_data(field.annotation)
+
+
 def test_get_optional_annotated_field_data_no_annotation(fake_field_directive):
     """\
     Test for get_optional_annotated_field_data when the first arg has no
