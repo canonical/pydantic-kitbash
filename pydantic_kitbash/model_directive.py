@@ -57,8 +57,6 @@ class KitbashModelDirective(KitbashDirective):
             list[nodes.Node]: Well-formed list of nodes to render into field entries.
 
         """
-        self._init_fields()
-
         # Get the target model, specified by `self.arguments[0]`
         py_module = self.env.ref_context.get("py:module", "")
         target_model = get_pydantic_model(py_module, self.arguments[0], "")

@@ -61,8 +61,6 @@ class KitbashFieldDirective(KitbashDirective):
             list[nodes.Node]: Well-formed list of nodes to render into field entry.
 
         """
-        self._init_fields()
-
         pydantic_model = get_pydantic_model(
             self.env.ref_context.get("py:module", ""),
             self.arguments[0],

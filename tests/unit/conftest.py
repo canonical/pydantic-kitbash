@@ -46,12 +46,20 @@ class FakeFieldDirective(KitbashFieldDirective):
         content: StringList,
         env_root: Path,
     ):
-        super()._init_fields()
         self.name = name
         self.arguments = arguments
         self.options = options
         self.content = content
         self.state = mock_state(env_root)
+
+        self.field_name = ""
+        self.field_alias = ""
+        self.field_description = None
+        self.field_examples = None
+        self.field_type = None
+        self.field_values = []
+        self.deprecation_warning = None
+        self.label = ""
 
 
 @pytest.fixture
@@ -102,6 +110,15 @@ class FakeModelDirective(KitbashModelDirective):
         self.options = options
         self.content = content
         self.state = mock_state(env_root)
+
+        self.field_name = ""
+        self.field_alias = ""
+        self.field_description = None
+        self.field_examples = None
+        self.field_type = None
+        self.field_values = []
+        self.deprecation_warning = None
+        self.label = ""
 
 
 @pytest.fixture
