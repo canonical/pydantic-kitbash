@@ -191,6 +191,7 @@ def test_kitbash_model(fake_model_directive):
     actual = fake_model_directive.run()
 
     for i, node in enumerate(expected):
+        print(f"\n\n{str(node)}\n\n{str(actual[i])}\n")
         assert str(node) == str(actual[i])
 
 
@@ -244,6 +245,7 @@ def test_kitbash_model_skip_description(fake_model_directive):
     actual = fake_model_directive.run()
 
     for i, node in enumerate(expected):
+        print(f"\n\n{str(node)}\n\n{str(actual[i])}\n")
         assert str(node) == str(actual[i])
 
 
