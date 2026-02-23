@@ -268,7 +268,7 @@ def test_get_optional_field_data_no_op(fake_field_directive):
         primitives: int | str
         generic_primitive: list[str]
         generic_union: list[str] | list[int]
-        annotated: list[Annotated[dict, str], "Annotation"] | None
+        annotated: list[Annotated[dict[str, str], "Annotation"]] | None
 
     for field in FakeModel.model_fields.values():
         fake_field_directive._get_optional_field_data(field.annotation)

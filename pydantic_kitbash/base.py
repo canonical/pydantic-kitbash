@@ -64,8 +64,11 @@ class KitbashDirective(SphinxDirective):
     field_values: list[tuple[str, str]]
     field_examples: list[str] | None
 
-    def _init_fields(self) -> None:
-        """Add extra state for Pydantic field data."""
+    @override
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+
+        # Add directive state for Pydantic field data
         self.field_name = ""
         self.field_alias = ""
         self.field_description = None

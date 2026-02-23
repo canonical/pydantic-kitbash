@@ -18,7 +18,8 @@
 
 from sphinx.util.typing import ExtensionMetadata
 from sphinx.application import Sphinx
-from pydantic_kitbash.directives import KitbashFieldDirective, KitbashModelDirective
+from pydantic_kitbash.field_directive import KitbashFieldDirective
+from pydantic_kitbash.model_directive import KitbashModelDirective
 
 
 def setup(app: Sphinx) -> ExtensionMetadata:
