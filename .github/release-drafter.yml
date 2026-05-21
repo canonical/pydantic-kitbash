@@ -1,20 +1,3 @@
-categories:
-  - title: "New Features"
-    labels:
-      - "enhancement"
-  - title: "Maintenance"
-    labels:
-      - "maintenance"
-  - title: "Bug Fixes"
-    labels:
-      - "bug"
-  - title: "Specifications and Documentation"
-    label:
-      - "specification"
-      - "doc"
-  - title: "Tooling"
-    label:
-      - "tooling"
 change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
 template: |
   Special thanks to the contributors that made this release happen: $CONTRIBUTORS
