@@ -61,5 +61,6 @@ jobs:
       - name: Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          gh release create "${{ github.ref_name }}" --generate-notes *.whl *.tar.gz
+          gh release create "${REF_NAME}" --generate-notes *.whl *.tar.gz
