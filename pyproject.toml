@@ -37,6 +37,11 @@ dev = [
     "bs4>=0.0.2",
 ]
 
+[tool.uv]
+constraint-dependencies = [
+    "soupsieve>=2.9.2",
+]
+
 [build-system]
 requires = ["setuptools>=69.0", "setuptools_scm[toml]>=7.1"]
 build-backend = "setuptools.build_meta"
