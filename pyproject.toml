@@ -39,7 +39,7 @@ dev = [
 
 [tool.uv]
 constraint-dependencies = [
-    "soupsieve >= 2.9.2",
+    "soupsieve>=2.9.2",
 ]
 
 [build-system]
