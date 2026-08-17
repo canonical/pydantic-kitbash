@@ -1,7 +1,6 @@
 Test output
 ===========
 
-
 Field directive
 ---------------
 
