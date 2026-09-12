@@ -20,20 +20,18 @@ import enum
 import inspect
 import re
 import warnings
-from typing import Any, Literal, get_args, get_origin
+from pathlib import Path
+from typing import Any, Literal, cast, get_args, get_origin
 
 import yaml
 from docutils import nodes
 from docutils.parsers.rst import Parser
 from docutils.utils import new_document
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 from sphinx.util.docutils import SphinxDirective
 from typing_extensions import override
 
 from pydantic_kitbash.utils import find_fieldinfo, format_type_string, get_enum_values
-
-# Compiled regex patterns for type formatting
-LITERAL_LIST_EXPR = re.compile(r"Literal\[(.*?)\]")
-LIST_ITEM_EXPR = re.compile(r"'([^']*)'")
 
 
 @override
@@ -62,7 +60,7 @@ class KitbashDirective(SphinxDirective):
     field_type: str | None
     field_description: str | None
     field_values: list[tuple[str, str]]
-    field_examples: list[str] | None
+    field_examples: list[str]
 
     @override
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -72,172 +70,96 @@ class KitbashDirective(SphinxDirective):
         self.field_name = ""
         self.field_alias = ""
         self.field_description = None
-        self.field_examples = None
+        self.field_examples = []
         self.field_type = None
         self.field_values = []
         self.deprecation_warning = None
         self.label = ""
 
     def _create_field_node(self) -> nodes.section:
-        """Create a section node containing all of the information for a single field.
+        """Create a section node using Jinja template for field information.
 
-        Args:
-            field_entry (FieldEntry): Object containing all of the field's data
+        This is an alternative implementation using a Jinja template to render
+        the field entry as RST, which is then parsed into docutils nodes.
 
         Returns:
             nodes.section: A section containing well-formed output for each provided field attribute.
 
         """
-        field_node = nodes.section(ids=[self.field_alias, self.label])
+        # Set up Jinja environment
+        template_dir = Path(__file__).parent / "templates"
+        env = Environment(
+            loader=FileSystemLoader(template_dir),
+            autoescape=select_autoescape(default_for_string=False),
+        )
+        template = env.get_template("field-entry.rst.j2")
+
+        # Format examples as YAML strings
+        self._format_examples()
+
+        # Render the template
+        field_rst = template.render(
+            model_name=(self.arguments[0].rsplit(".", maxsplit=1)[-1]).lower(),
+            field_name=self.field_alias,
+            field_type=self.field_type,
+            field_description=self.field_description,
+            field_values=self.field_values,
+            field_examples=self.field_examples,
+            deprecation_warning=self.deprecation_warning,
+        )
+
+        # Parse the RST output into docutils nodes
+        output_nodes = self._parse_rst(field_rst)
+
+        # The second node in the list is always the section node
+        field_node: nodes.section = cast(nodes.section, output_nodes[1])
+        # Apply the 'kitbash-entry' CSS class
         field_node["classes"] = ["kitbash-entry"]
-        title_node = nodes.title(text=self.field_alias)
-        field_node += title_node
-        target_node = nodes.target()
-        target_node["refid"] = self.label
-        field_node += target_node
-
-        if self.deprecation_warning:
-            deprecated_node = nodes.important()
-            deprecated_node += self._parse_rst_description(self.deprecation_warning)
-            field_node += deprecated_node
-
-        if self.field_type:
-            type_header = nodes.paragraph()
-            type_header += nodes.strong(text="Type")
-            field_node += type_header
-            type_value = nodes.paragraph()
-
-            if match := re.search(LITERAL_LIST_EXPR, str(self.field_type)):
-                list_str = match.group(1)
-                list_items = str(re.findall(LIST_ITEM_EXPR, list_str))
-                type_value += nodes.Text("One of: ")
-                type_value += nodes.literal(text=list_items)
-            else:
-                type_value += nodes.literal(text=self.field_type)
-
-            field_node += type_value
-
-        if self.field_description:
-            desc_header = nodes.paragraph()
-            desc_header += nodes.strong(text="Description")
-            field_node += desc_header
-            field_node += self._parse_rst_description(self.field_description)
-
-        if self.field_values:
-            values_header = nodes.paragraph()
-            values_header += nodes.strong(text="Values")
-            field_node += values_header
-            field_node += self._create_table_node()
-
-        if self.field_examples:
-            examples_header = nodes.paragraph()
-            examples_header += nodes.strong(text="Examples")
-            field_node += examples_header
-            for example in self.field_examples:
-                field_node += self._build_examples_block(example)
-
         return field_node
 
-    def _create_table_node(self) -> nodes.container:
-        """Create docutils table node.
-
-        Creates a container node containing a properly formatted table node.
-
-        Args:
-            values (list[list[str]]): A list of value-description pairs.
-            directive(SphinxDirective): The directive that outputs the returned nodes.
-
-        Returns:
-            nodes.container: A `div` containing a well-formed docutils table.
-
-        """
-        div_node = nodes.container()
-        table = nodes.table()
-        div_node += table
-
-        tgroup = nodes.tgroup(cols=2)
-        table += tgroup
-
-        tgroup += nodes.colspec(colwidth=50)
-        tgroup += nodes.colspec(colwidth=50)
-
-        thead = nodes.thead()
-        header_row = nodes.row()
-
-        values_entry = nodes.entry()
-        values_entry += nodes.paragraph(text="Value")
-        header_row += values_entry
-
-        desc_entry = nodes.entry()
-        desc_entry += nodes.paragraph(text="Description")
-        header_row += desc_entry
-
-        thead += header_row
-        tgroup += thead
-
-        tbody = nodes.tbody()
-        tgroup += tbody
-
-        for value_pair in self.field_values:
-            row = nodes.row()
-
-            value_entry = nodes.entry()
-            value_p = nodes.paragraph()
-            value_p += nodes.literal(text=value_pair[0])
-            value_entry += value_p
-            row += value_entry
-
-            desc_entry = nodes.entry()
-            desc_entry += self._parse_rst_description(value_pair[1])
-            row += desc_entry
-
-            tbody += row
-
-        return div_node
-
-    def _build_examples_block(self, example: str) -> nodes.literal_block:
+    def _format_examples(self) -> None:
         """Create code example with docutils literal_block.
 
         Creates a literal_block node before populating it with a properly formatted
         YAML string. Outputs warnings whenever invalid YAML is passed.
 
         Args:
-            field_name (str): The name of the field.
-            example (str): The field example being formatted.
+            examples (list[str]): The field examples being formatted.
 
         Returns:
-            nodes.literal_block: A literal block containing a well-formed YAML example.
+            list[str]: A list of well-formed YAML examples.
 
         """
         PrettyListDumper.add_representer(str, str_presenter)
-        example = f"{self.field_alias.rsplit('.', maxsplit=1)[-1]}: {example}"
-        if not example.endswith("\n"):
-            example = f"{example}\n"
-        try:
-            yaml_str = yaml.dump(
-                yaml.safe_load(example),
-                Dumper=PrettyListDumper,
-                default_style=None,
-                default_flow_style=False,
-                sort_keys=False,
-            )
-        except yaml.YAMLError as e:
-            warnings.warn(
-                f"Invalid YAML for field {self.name}: {e}",
-                category=UserWarning,
-                stacklevel=2,
-            )
-            yaml_str = example
+        formatted_examples: list[str] = []
 
-        yaml_str = yaml_str.rstrip("\n")
-        yaml_str = yaml_str.removesuffix("...")
+        for example in self.field_examples:
+            yaml_example = f"{self.field_alias.rsplit('.', maxsplit=1)[-1]}: {example}"
 
-        examples_block = nodes.literal_block(text=yaml_str)
-        examples_block["language"] = "yaml"
+            if not example.endswith("\n"):
+                yaml_example = f"{yaml_example}\n"
+            try:
+                yaml_str = yaml.dump(
+                    yaml.safe_load(yaml_example),
+                    Dumper=PrettyListDumper,
+                    default_style=None,
+                    default_flow_style=False,
+                    sort_keys=False,
+                )
+            except yaml.YAMLError as e:
+                warnings.warn(
+                    f"Invalid YAML for field {self.name}: {e}",
+                    category=UserWarning,
+                    stacklevel=2,
+                )
+                yaml_str = example
 
-        return examples_block
+            yaml_str = yaml_str.removesuffix("...\n")
+            formatted_examples.append(yaml_str)
 
-    def _parse_rst_description(self, rst: str) -> list[nodes.Node]:
+        self.field_examples = formatted_examples
+
+    def _parse_rst(self, rst: str) -> list[nodes.Node]:
         """Parse rST from model and field docstrings.
 
         Creates a reStructuredText document node from the given string so that
@@ -351,7 +273,9 @@ class KitbashDirective(SphinxDirective):
             if (
                 field_annotation
                 and self.field_description is None
-                and self.field_examples is None
+                and self.field_examples == []
             ):
                 self.field_description = field_annotation.description
-                self.field_examples = field_annotation.examples
+                self.field_examples = (
+                    field_annotation.examples if field_annotation.examples else []
+                )
