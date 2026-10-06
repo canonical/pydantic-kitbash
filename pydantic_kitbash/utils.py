@@ -194,7 +194,7 @@ def get_enum_member_docstring(cls: type[object], enum_member: str) -> str | None
                             docstring_node_value = cast(
                                 ast.Constant, docstring_node.value
                             )
-                            return str(docstring_node_value.value)
+                            return inspect.cleandoc(str(docstring_node_value.value))
 
     return None
 
@@ -247,7 +247,7 @@ def get_annotation_docstring(cls: type[object], annotation_name: str) -> str | N
         ):
             found = True
 
-    return docstring
+    return inspect.cleandoc(docstring) if docstring else None
 
 
 def format_type_string(type_str: type[object] | Any) -> str:  # noqa: ANN401

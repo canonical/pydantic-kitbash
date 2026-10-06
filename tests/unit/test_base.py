@@ -250,13 +250,13 @@ def test_create_table_node(fake_field_directive):
     assert str(expected) == str(actual)
 
 
-def test_parse_rst_description(fake_field_directive):
+def test_parse_rst(fake_field_directive):
     """Test parse_rst_description."""
 
     # use docutils to build rST like Sphinx would
     expected = publish_doctree(RST_SAMPLE).children
     # function output
-    actual = fake_field_directive._parse_rst_description(RST_SAMPLE)
+    actual = fake_field_directive._parse_rst(RST_SAMPLE)
 
     # comparing strings because docutils `__eq__`
     # method compares by identity rather than state

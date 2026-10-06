@@ -85,7 +85,7 @@ class KitbashFieldDirective(KitbashDirective):
             else self.field_description
         )
 
-        self.field_examples = field_params.examples
+        self.field_examples = field_params.examples if field_params.examples else []
 
         # if field is optional "normal" type (e.g., str | None)
         if field_params.annotation and get_origin(field_params.annotation) is UnionType:
@@ -124,7 +124,7 @@ class KitbashFieldDirective(KitbashDirective):
 
         # Remove examples if :skip-examples: directive option was used
         self.field_examples = (
-            None if "skip-examples" in self.options else self.field_examples
+            [] if "skip-examples" in self.options else self.field_examples
         )
 
         # Get strings to concatenate with `field_alias`
