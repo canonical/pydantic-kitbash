@@ -16,8 +16,8 @@ permissions:
 
 jobs:
   lint:
-    uses: canonical/starflow/.github/workflows/lint-python.yaml@main
+    uses: canonical/starflow/.github/workflows/lint-python.yaml@work/testing-skill
   test:
-    uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    uses: canonical/starflow/.github/workflows/test-python.yaml@work/testing-skill
     with:
       fast-test-python-versions: '["3.10", "3.11", "3.12", "3.13", "3.14"]'
