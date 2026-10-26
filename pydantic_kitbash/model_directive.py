@@ -65,9 +65,9 @@ class KitbashModelDirective(KitbashDirective):
 
         # User-provided description overrides model docstring
         if self.content:
-            class_node += self._parse_rst_description("\n".join(self.content))
+            class_node += self._parse_rst("\n".join(self.content))
         elif target_model.__doc__ and "skip-description" not in self.options:
-            class_node += self._parse_rst_description(target_model.__doc__)
+            class_node += self._parse_rst(target_model.__doc__)
 
         # Check if user provided a list of deprecated fields to include
         include_deprecated = [
@@ -109,7 +109,9 @@ class KitbashModelDirective(KitbashDirective):
                     else self.field_description
                 )
 
-                self.field_examples = field_params.examples
+                self.field_examples = (
+                    field_params.examples if field_params.examples else []
+                )
 
                 # if field is optional "normal" type (e.g., str | None)
                 if (
@@ -163,7 +165,7 @@ class KitbashModelDirective(KitbashDirective):
         self.field_name = ""
         self.field_alias = ""
         self.field_description = None
-        self.field_examples = None
+        self.field_examples = []
         self.field_type = None
         self.field_values = []
         self.deprecation_warning = None

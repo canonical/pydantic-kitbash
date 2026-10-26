@@ -1,0 +1,50 @@
+.. _{{ model_name}}.{{ field_name }}:
+
+{{ field_name }}
+{{ '=' * (field_name | length) }}
+{%- if deprecation_warning %}
+
+.. important::
+
+{{ deprecation_warning | indent(4, first=True) }}
+{%- endif %}
+{%- if field_type %}
+
+**Type**
+
+{% if field_type.startswith('Literal') -%}
+One of: ``{{ field_type[7:] }}``
+{%- else -%}
+``{{ field_type }}``
+{%- endif %}
+{%- endif %}
+{%- if field_description %}
+
+**Description**
+
+{{ field_description }}
+{%- endif %}
+{%- if field_values %}
+
+**Values**
+
+.. list-table::
+    :header-rows: 1
+
+    * - Value
+      - Description
+{%- for value, description in field_values %}
+    * - ``{{ value }}``
+      - {{ description }}
+{%- endfor %}
+{%- endif %}
+{%- if field_examples %}
+
+**Examples**
+{%- for example in field_examples %}
+
+.. code-block:: yaml
+
+{{ example | indent(4, first=True) }}
+{%- endfor %}
+{%- endif %}
