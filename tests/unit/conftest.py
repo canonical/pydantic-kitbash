@@ -45,7 +45,7 @@ class FakeFieldDirective(KitbashFieldDirective):
         options: dict[str, Any],
         content: StringList,
         env_root: Path,
-    ):
+    ):  # ty: ignore[invalid-method-override]
         self.name = name
         self.arguments = arguments
         self.options = options
@@ -104,7 +104,7 @@ class FakeModelDirective(KitbashModelDirective):
         options: dict[str, Any],
         content: StringList,
         env_root: Path,
-    ):
+    ):  # ty: ignore[invalid-method-override]
         self.name = name
         self.arguments = arguments
         self.options = options

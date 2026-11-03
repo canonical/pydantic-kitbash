@@ -16,13 +16,13 @@ Conduct](https://ubuntu.com/community/ethos/code-of-conduct).
 ### Canonical Contributor License Agreement
 
 As a contributor, you retain your copyright and attribution rights, provided you sign
-the [Canonical Contributor Licence Agreement](http://www.ubuntu.com/legal/contributors).
+the [Canonical Contributor License Agreement](http://www.ubuntu.com/legal/contributors).
 Before committing any code, review its terms. If you agree and sign it, your code can be
 incorporated into the repository.
 
 ### Open source license
 
-This project is licensed under [GPL-3.0](LICENSE).
+This project is licensed under [LGPL-3.0](LICENSE).
 
 ## Report an issue or open a request
 
@@ -67,7 +67,7 @@ Inside the project directory, set up the virtual development environment and ins
 dependencies, linters, and testers:
 
 ```bash
-make install
+make setup
 make lint
 make test
 ```
@@ -101,15 +101,13 @@ changes on.
 git checkout main
 git pull upstream main
 git checkout -b <new-branch-name>
-make install
+make setup
 ```
 
 The new branch name should be brief, at no more than 80 characters. Format your branch
 name as `<ticket-id>-<description>`. For example, if you're working on GitHub issue
-\#235, and it's about adding a string sanitizer, you'd name your branch
+#235, and it's about adding a string sanitizer, you'd name your branch
 `issue-235-add-string-sanitizer-method`.
-
-````
 
 ### Commit a change
 
@@ -119,7 +117,7 @@ committing:
 ```bash
 git add -A
 git commit
-````
+```
 
 Format the commit message according to the [Conventional
 Commits](https://www.conventionalcommits.org/en/v1.0.0/) style. For the sanitizer
@@ -130,7 +128,7 @@ feat: add text sanitizer
 ```
 
 If you need help determining the type of conventional commit for your change, look at
-the history of the file in question with `git log --oneline <filename>` . When you're
+the history of the file in question with `git log --oneline <filename>`. When you're
 done browsing, press `Q` to exit the interactive log.
 
 > **Tip**
@@ -172,7 +170,13 @@ The pydantic-kitbash test suite includes unit and integration tests. If you're n
 sure which tests you should add, go with your best judgement – additional tests can be
 added during the review process.
 
-Once you've made your changes, run the test suite:
+For low-complexity changes that require basic testing, run the fast tests:
+
+```bash
+make test-fast
+```
+
+For complex work, run the full test suite:
 
 ```bash
 make test
@@ -191,7 +195,32 @@ code. In such cases, it's best to delete your virtual environment and start over
 ```bash
 rm -rf .venv
 make clean
-make install
+make setup
+```
+
+### Document the change
+
+Before you start documenting your changes, take a moment to familiarize yourself with
+the four categories of [Diátaxis](https://diataxis.fr), the framework that the
+documentation is built around.
+
+Most small changes call for updates to the existing pages that describe the current
+behavior. Look for how-to guides and references that mention the affected feature, and
+make any necessary changes.
+
+Major changes require new documentation describing the feature's usage and
+specifications.
+
+Once you've updated the documentation, build the site locally with:
+
+```bash
+make docs
+```
+
+Check for problems in the documentation with:
+
+```bash
+make lint-docs
 ```
 
 ### Push the branch and open a PR
