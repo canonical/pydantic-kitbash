@@ -1,0 +1,17 @@
+name: TICS
+on:
+  push:
+    branches:
+      - "main"
+      # For troubleshooting
+      - "work/tiobe**"
+
+jobs:
+  TICS:
+    permissions:
+      contents: read
+    uses: canonical/starflow/.github/workflows/tics.yaml@main
+    with:
+      project: "pydantic-kitbash"
+    secrets:
+      TICSAUTHTOKEN: ${{ secrets.TICSAUTHTOKEN }}
