@@ -54,7 +54,7 @@ install-lint-build-deps:
 # Documentation targets (added for Starbase Sphinx docs scaffold).
 .PHONY: setup-docs
 setup-docs:
-	uv venv docs/.venv --python 3.12
+	uv venv docs/.venv --python 3.12 --clear
 	uv pip install --python docs/.venv/bin/python -r docs/requirements.txt
 
 .PHONY: docs
