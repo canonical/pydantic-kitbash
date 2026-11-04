@@ -49,3 +49,23 @@ endif
 # If additional build dependencies need installing in order to build the linting env.
 .PHONY: install-lint-build-deps
 install-lint-build-deps:
+
+
+# Documentation targets (added for Starbase Sphinx docs scaffold).
+.PHONY: setup-docs
+setup-docs:
+	uv venv docs/.venv --python 3.12
+	uv pip install --python docs/.venv/bin/python -r docs/requirements.txt
+
+.PHONY: docs
+docs: setup-docs
+	$(MAKE) -C docs html
+
+.PHONY: docs-lint
+docs-lint: setup-docs
+	$(MAKE) -C docs spelling
+	$(MAKE) -C docs woke
+
+.PHONY: docs-linkcheck
+docs-linkcheck: setup-docs
+	$(MAKE) -C docs linkcheck
