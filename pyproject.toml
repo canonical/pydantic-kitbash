@@ -9,7 +9,12 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.12",
 ]
-dependencies = ["docutils", "pydantic~=2.0", "pyyaml", "sphinx~=7.0"]
+dependencies = [
+  "docutils",
+  "pydantic~=2.0",
+  "pyyaml",
+  "sphinx>=7.0,<10.0",  # We'll need to check compatibility every time there's a new version.
+]
 dynamic = ["readme", "version"]
 
 [dependency-groups]
