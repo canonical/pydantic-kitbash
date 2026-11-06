@@ -29,6 +29,12 @@ sphinx-last-updated-by-git~=0.3
 sphinx-sitemap~=2.9
 sphinx-llm~=0.4
 
+# Minimum versions for transitive dependencies (osv-scanner)
+anyio>=4.14.2
+certifi>=2026.10.18
+h11>=0.16.0
+idna>=3.15
+
 # Vale dependencies
 rst2html
 vale~=3.13
