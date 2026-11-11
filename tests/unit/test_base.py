@@ -221,6 +221,16 @@ def test_build_list_example(fake_field_directive):
     assert str(expected) == str(actual)
 
 
+@pytest.mark.parametrize("quote", ['"', "'"])
+def test_build_quoted_example(fake_field_directive, quote):
+    """Test for build_examples_block preserving explicit string quotes."""
+
+    fake_field_directive.field_alias = "test"
+    actual = fake_field_directive._build_examples_block(f"{quote}two{quote}")
+
+    assert str(actual.children[0]).endswith(f"{quote}two{quote}")
+
+
 @pytest.mark.filterwarnings("ignore::UserWarning")
 def test_build_invalid_examples_block(fake_field_directive):
     """Test for build_examples_block with invalid input."""
