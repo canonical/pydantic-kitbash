@@ -45,8 +45,43 @@ class PrettyListDumper(yaml.Dumper):
         return super().increase_indent(flow, indentless=False)
 
 
+class QuotedScalar(str):
+    """A string that remembers the quote style used in its YAML source.
+
+    PyYAML's dumper would otherwise re-emit these values unquoted, losing
+    information the user explicitly provided (e.g., quoted version strings).
+    """
+
+    style: str
+
+
+class QuoteAwareLoader(yaml.SafeLoader):
+    """YAML loader that records the quote style of explicitly quoted scalars."""
+
+    @override
+    def construct_scalar(
+        self, node: yaml.nodes.ScalarNode | yaml.nodes.MappingNode
+    ) -> str:
+        value = super().construct_scalar(node)
+        # construct_scalar is only ever called with scalar nodes; the union in the
+        # signature exists only to satisfy the supertype's Liskov-compatible contract.
+        if (
+            isinstance(node, yaml.nodes.ScalarNode)
+            and node.style is not None
+            and node.style in ("'", '"')
+        ):
+            quoted = QuotedScalar(value)
+            quoted.style = node.style
+            return quoted
+        return value
+
+
 def str_presenter(dumper: yaml.Dumper, data: str) -> yaml.nodes.ScalarNode:
-    """Use the "|" style when presenting multiline strings."""
+    """Re-apply source quote styles, and use "|" style for multiline strings."""
+    if isinstance(data, QuotedScalar):
+        return dumper.represent_scalar(  # type: ignore[reportUnknownMemberType]
+            "tag:yaml.org,2002:str", data, style=data.style
+        )
     if "\n" in data:
         return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")  # type: ignore[reportUnknownMemberType]
     return dumper.represent_scalar("tag:yaml.org,2002:str", data)  # type: ignore[reportUnknownMemberType]
@@ -210,12 +245,15 @@ class KitbashDirective(SphinxDirective):
 
         """
         PrettyListDumper.add_representer(str, str_presenter)
+        # representer lookup is by exact type, so quoted scalars need their own entry
+        PrettyListDumper.add_representer(QuotedScalar, str_presenter)
         example = f"{self.field_alias.rsplit('.', maxsplit=1)[-1]}: {example}"
         if not example.endswith("\n"):
             example = f"{example}\n"
         try:
             yaml_str = yaml.dump(
-                yaml.safe_load(example),
+                # QuoteAwareLoader is a SafeLoader subclass; no unsafe constructors.
+                yaml.load(example, Loader=QuoteAwareLoader),  # noqa: S506
                 Dumper=PrettyListDumper,
                 default_style=None,
                 default_flow_style=False,
