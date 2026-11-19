@@ -275,12 +275,12 @@ class KitbashDirective(SphinxDirective):
         )
 
         # Add cross-referencing details to `objects.inv`
-        self.env.app.env.domaindata["std"]["labels"][self.label] = (
+        self.env.domaindata["std"]["labels"][self.label] = (
             self.env.docname,  # the document currently being parsed
             self.label,
             self.field_alias,
         )
-        self.env.app.env.domaindata["std"]["anonlabels"][self.label] = (
+        self.env.domaindata["std"]["anonlabels"][self.label] = (
             self.env.docname,
             self.label,
         )
