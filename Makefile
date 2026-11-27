@@ -1,17 +1,33 @@
 PROJECT=pydantic_kitbash
+# Define when more than the main package tree requires coverage
+# like is the case for snapcraft (snapcraft and snapcraft_legacy):
+# COVERAGE_SOURCE="starcraft"
 UV_TEST_GROUPS := "--group=dev"
-UV_LINT_GROUPS := "--group=lint" "--group=types"
+UV_DOCS_GROUPS := "--group=docs"
+UV_LINT_GROUPS := "--group=lint" "--group=types" $(UV_DOCS_GROUPS)
+UV_TICS_GROUPS := "--group=tics"
+
+# If you have dev dependencies that depend on your distro version, uncomment these:
+# ifneq ($(wildcard /etc/os-release),)
+# include /etc/os-release
+# endif
+# ifdef VERSION_CODENAME
+# UV_TEST_GROUPS += "--group=dev-$(VERSION_CODENAME)"
+# UV_DOCS_GROUPS += "--group=dev-$(VERSION_CODENAME)"
+# UV_LINT_GROUPS += "--group=dev-$(VERSION_CODENAME)"
+# UV_TICS_GROUPS += "--group=dev-$(VERSION_CODENAME)"
+# endif
 
 include common.mk
 
 .PHONY: format
-format: format-ruff format-codespell format-prettier  ## Run all automatic formatters
+format: format-ruff format-codespell format-prettier format-shfmt format-tombi format-pre-commit  ## Run all automatic formatters
 
 .PHONY: lint
-lint: lint-code lint-twine  ## Run all linters
+lint: lint-code lint-docs lint-twine lint-uv-lockfile lint-actions  ## Run all linters
 
 .PHONY: lint-code
-lint-code: lint-ruff lint-codespell lint-mypy lint-prettier lint-pyright lint-shellcheck  ## Run code-specific linters
+lint-code: lint-ruff lint-ty lint-codespell lint-prettier lint-shfmt lint-shellcheck lint-tombi  ## Run code-specific linters
 
 .PHONY: pack
 pack: pack-pip  ## Build all packages
@@ -20,7 +36,7 @@ pack: pack-pip  ## Build all packages
 publish: publish-pypi  ## Publish packages
 
 .PHONY: publish-pypi
-publish-pypi: clean package-pip lint-twine  ## Publish Python packages to pypi
+publish-pypi: clean pack-pip lint-twine  ## Publish Python packages to pypi
 	uv tool run twine upload dist/*
 
 # Find dependencies that need installing
